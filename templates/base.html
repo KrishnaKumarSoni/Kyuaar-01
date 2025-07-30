@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Kyuaar - Packet Management{% endblock %}</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Custom Tailwind Configuration -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            DEFAULT: '#CC5500',
+                            hover: '#FF6600',
+                            light: '#FF8833'
+                        },
+                        burnt: {
+                            50: '#FFF5F0',
+                            100: '#FFE6D9',
+                            200: '#FFD3BD',
+                            300: '#FFBA94',
+                            400: '#FF9966',
+                            500: '#FF6600',
+                            600: '#CC5500',
+                            700: '#994000',
+                            800: '#662B00',
+                            900: '#331500'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <!-- Alpine.js for interactivity -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary: #CC5500;
+            --primary-hover: #FF6600;
+            --accent: #FF8833;
+        }
+        
+        .dark {
+            color-scheme: dark;
+        }
+        
+        /* Shadcn-like component styles */
+        .btn {
+            @apply inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50;
+        }
+        
+        .btn-primary {
+            @apply bg-primary hover:bg-primary-hover text-white focus-visible:ring-primary;
+        }
+        
+        .btn-secondary {
+            @apply bg-zinc-800 hover:bg-zinc-700 text-zinc-100 focus-visible:ring-zinc-600;
+        }
+        
+        .btn-ghost {
+            @apply hover:bg-zinc-800 hover:text-zinc-100;
+        }
+        
+        .card {
+            @apply rounded-lg border border-zinc-800 bg-zinc-900/50 backdrop-blur;
+        }
+        
+        .input {
+            @apply flex h-10 w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm ring-offset-zinc-950 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+        }
+        
+        .label {
+            @apply text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70;
+        }
+    </style>
+    
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-zinc-950 text-zinc-50 min-h-screen">
+    <!-- Navigation -->
+    <nav class="border-b border-zinc-800 bg-zinc-900/50 backdrop-blur sticky top-0 z-50" x-data="{ mobileMenu: false }">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <a href="{{ url_for('dashboard.index') if current_user.is_authenticated else url_for('auth.login') }}" class="flex items-center space-x-2">
+                        <i class="ph-package text-2xl text-primary"></i>
+                        <span class="font-bold text-xl">Kyuaar</span>
+                    </a>
+                    
+                    {% if current_user.is_authenticated %}
+                    <div class="hidden md:block ml-10">
+                        <div class="flex items-baseline space-x-4">
+                            <a href="{{ url_for('dashboard.index') }}" class="btn btn-ghost px-3 py-2">
+                                <i class="ph-house mr-2"></i> Dashboard
+                            </a>
+                            <a href="{{ url_for('packets.list') }}" class="btn btn-ghost px-3 py-2">
+                                <i class="ph-package mr-2"></i> Packets
+                            </a>
+                            <a href="{{ url_for('config.settings') }}" class="btn btn-ghost px-3 py-2">
+                                <i class="ph-gear mr-2"></i> Settings
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <!-- Dark mode toggle -->
+                    <button onclick="toggleTheme()" class="btn btn-ghost p-2">
+                        <i class="ph-sun text-xl dark:hidden"></i>
+                        <i class="ph-moon text-xl hidden dark:block"></i>
+                    </button>
+                    
+                    {% if current_user.is_authenticated %}
+                    <!-- User menu -->
+                    <div class="relative" x-data="{ open: false }">
+                        <button @click="open = !open" class="btn btn-ghost px-3 py-2">
+                            <i class="ph-user-circle mr-2"></i>
+                            {{ current_user.email }}
+                            <i class="ph-caret-down ml-2"></i>
+                        </button>
+                        
+                        <div x-show="open" @click.away="open = false" x-transition 
+                             class="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-zinc-900 border border-zinc-800">
+                            <a href="{{ url_for('auth.logout') }}" class="block px-4 py-2 text-sm hover:bg-zinc-800">
+                                <i class="ph-sign-out mr-2"></i> Logout
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Mobile menu button -->
+                    <button @click="mobileMenu = !mobileMenu" class="md:hidden btn btn-ghost p-2">
+                        <i class="ph-list text-xl"></i>
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mobile menu -->
+        {% if current_user.is_authenticated %}
+        <div x-show="mobileMenu" x-transition class="md:hidden border-t border-zinc-800">
+            <div class="px-2 pt-2 pb-3 space-y-1">
+                <a href="{{ url_for('dashboard.index') }}" class="btn btn-ghost w-full justify-start px-3 py-2">
+                    <i class="ph-house mr-2"></i> Dashboard
+                </a>
+                <a href="{{ url_for('packets.list') }}" class="btn btn-ghost w-full justify-start px-3 py-2">
+                    <i class="ph-package mr-2"></i> Packets
+                </a>
+                <a href="{{ url_for('config.settings') }}" class="btn btn-ghost w-full justify-start px-3 py-2">
+                    <i class="ph-gear mr-2"></i> Settings
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </nav>
+    
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+                {% for category, message in messages %}
+                    <div class="card p-4 mb-4 {% if category == 'error' %}border-red-800 bg-red-900/20{% elif category == 'success' %}border-green-800 bg-green-900/20{% else %}border-blue-800 bg-blue-900/20{% endif %}" x-data="{ show: true }" x-show="show">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                {% if category == 'error' %}
+                                    <i class="ph-warning-circle text-red-500 mr-2"></i>
+                                {% elif category == 'success' %}
+                                    <i class="ph-check-circle text-green-500 mr-2"></i>
+                                {% else %}
+                                    <i class="ph-info text-blue-500 mr-2"></i>
+                                {% endif %}
+                                <span>{{ message }}</span>
+                            </div>
+                            <button @click="show = false" class="btn btn-ghost p-1">
+                                <i class="ph-x"></i>
+                            </button>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+    
+    <!-- Main content -->
+    <main class="flex-1">
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Footer -->
+    <footer class="border-t border-zinc-800 bg-zinc-900/50 backdrop-blur mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="text-center text-sm text-zinc-400">
+                <p>&copy; 2024 Kyuaar. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Theme toggle script -->
+    <script>
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.classList.contains('dark') ? 'dark' : 'light';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            if (newTheme === 'dark') {
+                html.classList.add('dark');
+            } else {
+                html.classList.remove('dark');
+            }
+            
+            localStorage.setItem('theme', newTheme);
+        }
+        
+        // Initialize theme from localStorage
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            if (savedTheme === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+    </script>
+    
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>
