@@ -18,7 +18,15 @@ os.environ['FIREBASE_STORAGE_BUCKET'] = 'test-bucket'
 with patch('firebase_admin.initialize_app'), \
      patch('firebase_admin.firestore.client'), \
      patch('firebase_admin.storage.bucket'):
-    from app import app as flask_app
+    import sys
+    import os
+    sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+    # Import from the main app.py file at the root
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("app", os.path.join(os.path.dirname(os.path.dirname(__file__)), "app.py"))
+    app_module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(app_module)
+    flask_app = app_module.app
 
 
 @pytest.fixture

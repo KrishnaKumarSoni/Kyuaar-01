@@ -1,6 +1,5 @@
 {
   "version": 2,
-  "name": "kyuaar-01",
   "builds": [
     {
       "src": "wsgi.py",
@@ -15,10 +14,5 @@
   ],
   "env": {
     "FLASK_ENV": "production"
-  },
-  "functions": {
-    "wsgi.py": {
-      "maxDuration": 30
-    }
   }
 }
