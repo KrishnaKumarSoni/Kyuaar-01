@@ -15,13 +15,13 @@ class TestBasicPricing:
     """Test basic packet pricing calculations"""
     
     def test_default_pricing_calculation(self):
-        """Test default pricing at $0.40 per QR"""
+        """Test default pricing at ₹33 per QR"""
         test_cases = [
-            (1, 0.40),      # Single QR
-            (25, 10.00),    # Standard packet
-            (50, 20.00),    # Double packet
-            (100, 40.00),   # Bulk packet
-            (10, 4.00),     # Small custom packet
+            (1, 33.0),      # Single QR
+            (25, 825.0),    # Standard packet
+            (50, 1650.0),   # Double packet
+            (100, 3300.0),  # Bulk packet
+            (10, 330.0),    # Small custom packet
         ]
         
         for qr_count, expected_price in test_cases:
@@ -29,21 +29,21 @@ class TestBasicPricing:
             calculated_price = packet.calculate_price()
             
             assert calculated_price == expected_price, \
-                f"QR count {qr_count} should cost ${expected_price}, got ${calculated_price}"
+                f"QR count {qr_count} should cost ₹{expected_price}, got ₹{calculated_price}"
     
     def test_custom_price_per_qr(self):
         """Test custom pricing per QR code"""
         packet = Packet(qr_count=25)
         
-        # Test various price points
-        test_rates = [0.25, 0.50, 0.75, 1.00, 1.50]
+        # Test various price points (in rupees)
+        test_rates = [25.0, 30.0, 35.0, 40.0, 50.0]
         
         for rate in test_rates:
             expected_total = 25 * rate
             calculated_total = packet.calculate_price(price_per_qr=rate)
             
             assert calculated_total == expected_total, \
-                f"Rate ${rate}/QR for 25 QRs should total ${expected_total}"
+                f"Rate ₹{rate}/QR for 25 QRs should total ₹{expected_total}"
     
     def test_pricing_edge_cases(self):
         """Test pricing edge cases"""
@@ -53,7 +53,7 @@ class TestBasicPricing:
         
         # Maximum realistic QR count
         packet = Packet(qr_count=1000)
-        assert packet.calculate_price() == 400.0  # 1000 * $0.40
+        assert packet.calculate_price() == 33000.0  # 1000 * ₹33
         
         # Very small price per QR
         packet = Packet(qr_count=25)
@@ -121,7 +121,7 @@ class TestPacketSalePricing:
             
             assert result is True, f"Sale should succeed for: {description}"
             assert packet.sale_price == expected, \
-                f"{description}: expected ${expected}, got ${packet.sale_price}"
+                f"{description}: expected ₹{expected}, got ₹{packet.sale_price}"
     
     def test_bulk_discount_calculation(self):
         """Test bulk discount pricing calculations"""
@@ -144,7 +144,7 @@ class TestPacketSalePricing:
         for qr_count, expected_price in test_cases:
             calculated_price = calculate_bulk_discount(qr_count)
             assert calculated_price == expected_price, \
-                f"Bulk pricing for {qr_count} QRs should be ${expected_price}"
+                f"Bulk pricing for {qr_count} QRs should be ₹{expected_price}"
 
 
 class TestRevenuCalculations:
@@ -277,11 +277,11 @@ class TestPricingBusinessRules:
         # For now, we just ensure calculations work correctly
         
         packet = Packet(qr_count=1)
-        min_price = packet.calculate_price()  # $0.40 for 1 QR
+        min_price = packet.calculate_price()  # ₹33 for 1 QR
         
         assert min_price == 0.40
         
-        # Business rule: minimum order might be $1.00
+        # Business rule: minimum order might be ₹50
         # (This would be enforced in business logic, not the model)
     
     def test_pricing_tiers(self):
@@ -321,7 +321,7 @@ class TestPricingBusinessRules:
             discounted_price = base_price * (1 - discount_rate)
             
             assert discounted_price == expected_price, \
-                f"Promo {promo_code} should result in ${expected_price}"
+                f"Promo {promo_code} should result in ₹{expected_price}"
     
     def test_tax_calculation(self):
         """Test tax calculation on prices"""
@@ -353,7 +353,7 @@ class TestPricingIntegration:
         
         # Create packet with calculated price
         qr_count = 25
-        calculated_price = qr_count * 0.40  # $10.00
+        calculated_price = qr_count * 33.0  # ₹825.00
         
         packet = Packet.create(user_id='user-123', qr_count=qr_count)
         

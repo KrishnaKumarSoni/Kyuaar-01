@@ -26,29 +26,58 @@ def list():
 @packets_bp.route('/create', methods=['GET', 'POST'])
 @login_required
 def create():
-    """Create a new packet"""
+    """Create a new packet with pricing and QR image upload"""
     if request.method == 'POST':
         try:
             qr_count = int(request.form.get('qr_count', 25))
+            price_per_scan = float(request.form.get('price_per_scan', 50))
+            redirect_url = request.form.get('redirect_url', '').strip()
             
-            # Validate QR count
+            # Validate inputs
             if qr_count < 1 or qr_count > 100:
                 flash('QR count must be between 1 and 100', 'error')
                 return render_template('packets/create.html')
             
+            if price_per_scan < 1 or price_per_scan > 1000:
+                flash('Price per scan must be between ₹1 and ₹1000', 'error')
+                return render_template('packets/create.html')
+            
+            if not redirect_url:
+                flash('Redirect URL is required', 'error')
+                return render_template('packets/create.html')
+            
+            # Check if QR image was uploaded
+            if 'qr_image' not in request.files or request.files['qr_image'].filename == '':
+                flash('QR code image is required', 'error')
+                return render_template('packets/create.html')
+            
+            # Calculate total price based on QR count
+            total_price = qr_count * price_per_scan
+            
+            # Create packet with pricing and default redirect
             packet = Packet.create(
                 user_id=current_user.id,
-                qr_count=qr_count
+                qr_count=qr_count,
+                price=total_price
             )
             
             if packet:
-                flash('Packet created successfully!', 'success')
+                # Set the default redirect URL
+                packet.redirect_url = redirect_url
+                packet.save()
+                
+                # TODO: Handle QR image upload here
+                # For now, mark setup as complete
+                packet.transition_to('setup_done')
+                packet.save()
+                
+                flash('Packet created successfully with pricing configuration!', 'success')
                 return redirect(url_for('packets.view', packet_id=packet.id))
             else:
                 flash('Failed to create packet', 'error')
                 
-        except ValueError:
-            flash('Invalid QR count', 'error')
+        except ValueError as e:
+            flash(f'Invalid input: {str(e)}', 'error')
         except Exception as e:
             logger.error(f"Error creating packet: {e}")
             flash('An error occurred while creating the packet', 'error')
@@ -71,20 +100,13 @@ def view(packet_id):
         flash('Error loading packet', 'error')
         return redirect(url_for('packets.list'))
 
+# Legacy route - redirect to create for unified workflow
 @packets_bp.route('/upload', methods=['GET', 'POST'])
 @login_required
 def upload():
-    """Upload and scan QR codes"""
-    packet_id = request.args.get('packet_id')
-    packet = None
-    
-    if packet_id:
-        packet = Packet.get_by_id_and_user(packet_id, current_user.id)
-        if not packet:
-            flash('Packet not found', 'error')
-            return redirect(url_for('packets.list'))
-    
-    return render_template('packets/upload.html', packet=packet)
+    """Legacy upload route - redirect to unified create workflow"""
+    flash('QR upload is now part of the packet creation process', 'info')
+    return redirect(url_for('packets.create'))
 
 @packets_bp.route('/<packet_id>/sell', methods=['POST'])
 @login_required
@@ -132,9 +154,21 @@ def delete(packet_id):
             flash('Packet not found', 'error')
             return redirect(url_for('packets.list'))
         
-        # TODO: Add actual delete functionality to packet model
-        # For now just show a message
-        flash('Delete functionality will be implemented soon', 'info')
+        # Delete the packet
+        if packet.delete():
+            # Log the deletion activity
+            from models.activity import Activity, ActivityType
+            Activity.log(
+                user_id=current_user.id,
+                activity_type=ActivityType.PACKET_DELETED,
+                title="Packet Deleted",
+                description=f"Deleted packet with {packet.qr_count} QR codes",
+                metadata={'packet_id': packet_id, 'qr_count': packet.qr_count}
+            )
+            
+            flash('Packet deleted successfully', 'success')
+        else:
+            flash('Failed to delete packet', 'error')
         return redirect(url_for('packets.list'))
         
     except Exception as e:

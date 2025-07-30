@@ -72,7 +72,7 @@
                                     </a>
                                     {% if packet.state == 'setup_done' %}
                                     <button class="btn btn-ghost p-2 text-green-400" title="Mark as Sold" onclick="markAsSold('{{ packet.id }}')">
-                                        <i class="ph ph-currency-dollar text-lg"></i>
+                                        <i class="ph ph-currency-circle-dollar text-lg"></i>
                                     </button>
                                     {% endif %}
                                     <button class="btn btn-ghost p-2 text-red-400 hover:text-red-300" title="Delete" onclick="deletePacket('{{ packet.id }}')">

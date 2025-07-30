@@ -15,11 +15,13 @@ Configuration Done: Customer has scanned and set the redirect (e.g., WhatsApp nu
 
 * Configuration Journey:
 
-Scans to base URL check packet state:
+CUSTOMER SETUP FLOW: When customer scans QR → it goes to base URL (kyuaar.com/packet/[id]) → we check packet state:
 
 If Setup Pending: Show error page ("Packet not ready").
-If Setup Done but Configuration Pending: On first scan, show config page on customer's mobile to enter/validate phone number (e.g., +919166900151) or custom URL. Set redirect in DB to wa.me/[number] or custom URL, then update state to Configuration Done.
-If Configuration Done: Redirect to the set URL for all subsequent scans.
+If Setup Done but Configuration Pending: Customer sees config page on their mobile to enter/validate phone number (e.g., +919166900151) or custom URL. After they submit, we set redirect in DB to wa.me/[number] or custom URL, then update state to Configuration Done.
+If Configuration Done: All QRs in packet redirect from base URL to the configured destination URL.
+
+IMPORTANT: All QRs in the packet have the SAME base URL. When customer configures the redirect, it applies to ALL QRs in that packet.
 
 
 
@@ -31,7 +33,9 @@ Post-Sale: Customer receives packet, scans QR (opens config page on mobile), set
 Updates: Customers can re-scan to edit redirect if needed (admin-configurable).
 
 
-* User Journey (Customer's Voice): "Bought 25 QR stickers from Kyuaar offline. Admin marked it sold, I generated QRs externally with the base URL, uploaded. Scanned one to set my WhatsApp on my phone – simple form. Now, customers scan from my shop and chat instantly. Dashboard shows it's all configured!"
+* User Journey (Customer's Voice): "Bought 25 QR stickers from Kyuaar offline. Admin had already generated QRs externally with the base URL and uploaded them. I scanned one QR to set my WhatsApp on my phone – simple form. Now, ALL 25 QRs redirect to my WhatsApp when customers scan them from my shop. Dashboard shows packet is configured!"
+
+CLARIFICATION: Admin generates and uploads QR images (not customer). Customer only configures where the QRs redirect to.
 * Business Model: Sell packets offline. Track sales, pricing, and revenue in admin dashboard for simple business operations.
 
 Tech Stack Requirements
@@ -60,7 +64,7 @@ List/Edit: Table of packets with columns: ID, Base URL, QR Count, State (Setup P
 
 * Sales and Pricing Configurations:
 
-Simple Pricing: During packet creation or marking sold, input fields for price per packet (e.g., default $10 for 25 QRs). Auto-calculate based on QR count if needed (e.g., $0.40 per QR).
+PRICING CONFIG IS SIMPLE: Set how much we'll sell this packet for. That's it. During packet creation or marking sold, input field for sale price per packet (e.g., $10 for 25 QRs). This is the price we charge the customer for the entire packet.
 Revenue Tracking: Dashboard section with total revenue, sales history table (packet ID, buyer, price, date), basic charts (use simple JS like Chart.js via CDN for monthly earnings).
 Minimal Business Flows:
 

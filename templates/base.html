@@ -75,14 +75,38 @@
     
     <!-- Dark mode with burnt orange theme -->
     <style>
+        /* CSS Custom Properties for shadcn/ui theming */
+        :root {
+            --background: 222.2 84% 4.9%; /* zinc-950 */
+            --foreground: 210 40% 98%; /* zinc-50 */
+            --card: 222.2 84% 4.9%; /* zinc-950 */
+            --card-foreground: 210 40% 98%; /* zinc-50 */
+            --popover: 222.2 84% 4.9%; /* zinc-950 */
+            --popover-foreground: 210 40% 98%; /* zinc-50 */
+            --primary: 22 100% 40%; /* burnt orange #CC5500 */
+            --primary-foreground: 210 40% 98%; /* white */
+            --secondary: 217.2 32.6% 17.5%; /* zinc-800 */
+            --secondary-foreground: 210 40% 98%; /* zinc-50 */
+            --muted: 217.2 32.6% 17.5%; /* zinc-800 */
+            --muted-foreground: 215 20.2% 65.1%; /* zinc-400 */
+            --accent: 217.2 32.6% 17.5%; /* zinc-800 */
+            --accent-foreground: 210 40% 98%; /* zinc-50 */
+            --destructive: 0 62.8% 30.6%; /* red-600 */
+            --destructive-foreground: 210 40% 98%; /* zinc-50 */
+            --border: 217.2 32.6% 17.5%; /* zinc-800 */
+            --input: 217.2 32.6% 17.5%; /* zinc-800 */
+            --ring: 22 100% 40%; /* burnt orange */
+            --radius: 0.5rem;
+        }
+        
         /* Force dark mode always */
         * {
             box-sizing: border-box;
         }
         
         body {
-            background-color: #09090b !important; /* zinc-950 */
-            color: #fafafa !important; /* zinc-50 */
+            background-color: hsl(var(--background)) !important;
+            color: hsl(var(--foreground)) !important;
             font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         }
         
@@ -171,86 +195,98 @@
             color: #09090b !important; /* zinc-950 */
         }
         
-        /* Navigation */
-        nav {
-            background-color: #18181b !important; /* zinc-900 */
-            border-bottom: 1px solid #27272a !important; /* zinc-800 */
+        /* Header/Navigation using shadcn/ui variables */
+        header {
+            background-color: hsl(var(--background)) !important;
+            border-bottom: 1px solid hsl(var(--border)) !important;
+        }
+        
+        /* Navigation links active state */
+        .nav-active {
+            color: hsl(var(--primary)) !important;
         }
         
         /* Cards */
         .card, .rounded-lg.border {
-            background-color: #18181b !important; /* zinc-900 */
-            border: 1px solid #27272a !important; /* zinc-800 */
-            color: #fafafa !important;
+            background-color: hsl(var(--card)) !important;
+            border: 1px solid hsl(var(--border)) !important;
+            color: hsl(var(--card-foreground)) !important;
         }
         
         /* Inputs */
         input, textarea, select {
-            background-color: #18181b !important; /* zinc-900 */
-            border: 1px solid #27272a !important; /* zinc-800 */
-            color: #fafafa !important;
+            background-color: hsl(var(--background)) !important;
+            border: 1px solid hsl(var(--border)) !important;
+            color: hsl(var(--foreground)) !important;
         }
         
         input:focus, textarea:focus, select:focus {
             outline: none !important;
-            border-color: #CC5500 !important;
-            box-shadow: 0 0 0 2px rgba(204, 85, 0, 0.2) !important;
+            border-color: hsl(var(--primary)) !important;
+            box-shadow: 0 0 0 2px hsl(var(--primary) / 0.2) !important;
         }
         
         input::placeholder, textarea::placeholder {
-            color: #71717a !important; /* zinc-500 */
+            color: hsl(var(--muted-foreground)) !important;
         }
         
         /* Labels */
         label {
-            color: #fafafa !important;
+            color: hsl(var(--foreground)) !important;
             font-weight: 500;
         }
         
         /* Links */
         a {
-            color: #fafafa !important;
+            color: hsl(var(--foreground)) !important;
             text-decoration: none;
         }
         
         a:hover {
-            color: #CC5500 !important;
+            color: hsl(var(--primary)) !important;
         }
         
         /* Footer */
         footer {
-            background-color: #18181b !important; /* zinc-900 */
-            border-top: 1px solid #27272a !important; /* zinc-800 */
-            color: #71717a !important; /* zinc-500 */
+            background-color: hsl(var(--card)) !important;
+            border-top: 1px solid hsl(var(--border)) !important;
+            color: hsl(var(--muted-foreground)) !important;
         }
         
-        /* Text colors */
+        /* Text colors using shadcn/ui variables */
         .text-muted-foreground {
-            color: #71717a !important; /* zinc-500 */
+            color: hsl(var(--muted-foreground)) !important;
         }
         
         .text-foreground {
-            color: #fafafa !important; /* zinc-50 */
+            color: hsl(var(--foreground)) !important;
         }
         
         /* Alerts */
         .text-destructive {
-            color: #ef4444 !important; /* red-500 */
+            color: hsl(var(--destructive)) !important;
         }
         
         /* Checkboxes */
         input[type="checkbox"] {
-            accent-color: #CC5500 !important;
+            accent-color: hsl(var(--primary)) !important;
         }
         
-        /* Dropdowns */
-        .absolute.right-0 {
-            background-color: #18181b !important; /* zinc-900 */
-            border: 1px solid #27272a !important; /* zinc-800 */
+        /* Dropdown menus using proper shadcn/ui styling */
+        .bg-popover {
+            background-color: hsl(var(--popover)) !important;
         }
         
-        .absolute.right-0 a:hover {
-            background-color: #27272a !important; /* zinc-800 */
+        .text-popover-foreground {
+            color: hsl(var(--popover-foreground)) !important;
+        }
+        
+        .hover\:bg-accent:hover {
+            background-color: hsl(var(--accent)) !important;
+        }
+        
+        .hover\:text-accent-foreground:hover {
+            color: hsl(var(--accent-foreground)) !important;
         }
         
         /* Phosphor Icons - Ensure they display properly */
@@ -295,60 +331,92 @@
     {% block extra_head %}{% endblock %}
 </head>
 <body class="min-h-screen">
-    <!-- Navigation -->
-    <nav class="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60" x-data="{ mobileMenu: false }">
-        <div class="container flex h-14 items-center">
+    <!-- Navigation Header -->
+    <header class="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60" 
+            x-data="{ mobileMenuOpen: false, userMenuOpen: false }">
+        <div class="container flex h-14 max-w-screen-2xl items-center">
+            <!-- Desktop Navigation -->
             <div class="mr-4 hidden md:flex">
-                <a href="{{ url_for('dashboard.index') if current_user.is_authenticated else url_for('auth.login') }}" class="mr-6 flex items-center space-x-2">
+                <!-- Logo/Brand -->
+                <a class="mr-6 flex items-center space-x-2" href="{{ url_for('dashboard.index') if current_user.is_authenticated else url_for('landing') }}">
                     <i class="ph ph-package text-2xl text-primary"></i>
-                    <span class="font-bold text-xl">Kyuaar</span>
+                    <span class="hidden font-bold sm:inline-block">Kyuaar</span>
                 </a>
                 
+                <!-- Main Navigation -->
                 {% if current_user.is_authenticated %}
-                <nav class="flex items-center space-x-6 text-sm font-medium">
-                    <a href="{{ url_for('dashboard.index') }}" class="flex items-center transition-colors hover:text-primary text-foreground/80">
-                        <i class="ph ph-house mr-2"></i>Dashboard
+                <nav class="flex items-center gap-6 text-sm">
+                    <a class="transition-colors hover:text-foreground/80 text-foreground/60 {% if request.endpoint == 'dashboard.index' %}text-foreground{% endif %}" 
+                       href="{{ url_for('dashboard.index') }}">
+                        Dashboard
                     </a>
-                    <a href="{{ url_for('packets.list') }}" class="flex items-center transition-colors hover:text-primary text-foreground/80">
-                        <i class="ph ph-package mr-2"></i>Packets
+                    <a class="transition-colors hover:text-foreground/80 text-foreground/60 {% if request.endpoint and 'packets' in request.endpoint %}text-foreground{% endif %}" 
+                       href="{{ url_for('packets.list') }}">
+                        Packets
                     </a>
-                    <a href="{{ url_for('config.settings') }}" class="flex items-center transition-colors hover:text-primary text-foreground/80">
-                        <i class="ph ph-gear mr-2"></i>Settings
+                    <a class="transition-colors hover:text-foreground/80 text-foreground/60 {% if request.endpoint and 'config' in request.endpoint %}text-foreground{% endif %}" 
+                       href="{{ url_for('config.settings') }}">
+                        Settings
                     </a>
                 </nav>
                 {% endif %}
             </div>
             
-            <!-- Mobile menu button -->
-            <button @click="mobileMenu = !mobileMenu" class="mr-2 px-0 text-base hover:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 md:hidden">
-                <i class="ph ph-list text-xl"></i>
+            <!-- Mobile Navigation Button -->
+            <button class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 w-9 shrink-0 md:hidden" 
+                    @click="mobileMenuOpen = !mobileMenuOpen">
+                <i class="ph ph-list h-5 w-5" x-show="!mobileMenuOpen"></i>
+                <i class="ph ph-x h-5 w-5" x-show="mobileMenuOpen" style="display: none;"></i>
                 <span class="sr-only">Toggle Menu</span>
             </button>
             
-            <!-- Mobile Logo -->
+            <!-- Mobile Logo + Right Side -->
             <div class="flex flex-1 items-center justify-between space-x-2 md:justify-end">
+                <!-- Mobile Logo -->
                 <div class="w-full flex-1 md:w-auto md:flex-none">
-                    <a href="{{ url_for('dashboard.index') if current_user.is_authenticated else url_for('auth.login') }}" class="flex items-center space-x-2 md:hidden">
-                        <i class="ph ph-package text-2xl text-primary"></i>
+                    <a class="flex items-center space-x-2 md:hidden" 
+                       href="{{ url_for('dashboard.index') if current_user.is_authenticated else url_for('landing') }}">
+                        <i class="ph ph-package text-xl text-primary"></i>
                         <span class="font-bold">Kyuaar</span>
                     </a>
                 </div>
                 
-                <nav class="flex items-center space-x-2">
+                <!-- Right Side Navigation -->
+                <nav class="flex items-center">
                     {% if current_user.is_authenticated %}
-                    <!-- User menu -->
-                    <div class="relative" x-data="{ open: false }">
-                        <button @click="open = !open" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background hover:bg-accent hover:text-accent-foreground h-10 py-2 px-4">
-                            <i class="ph ph-user-circle mr-2"></i>
-                            {{ current_user.email }}
-                            <i class="ph ph-caret-down ml-2"></i>
-                        </button>
+                    <!-- User Dropdown Menu -->
+                    <div class="relative inline-block text-left">
+                        <div>
+                            <button type="button" 
+                                    class="inline-flex w-full justify-center gap-x-1.5 rounded-md bg-background px-3 py-2 text-sm font-semibold text-foreground shadow-sm ring-1 ring-inset ring-border hover:bg-accent"
+                                    @click="userMenuOpen = !userMenuOpen" 
+                                    aria-expanded="true" 
+                                    aria-haspopup="true">
+                                <i class="ph ph-user-circle h-5 w-5"></i>
+                                <span class="hidden sm:block">{{ current_user.email }}</span>
+                                <i class="ph ph-caret-down -mr-1 h-5 w-5 text-muted-foreground" aria-hidden="true"></i>
+                            </button>
+                        </div>
                         
-                        <div x-show="open" @click.away="open = false" x-transition 
-                             class="absolute right-0 z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md">
-                            <a href="{{ url_for('auth.logout') }}" class="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground">
-                                <i class="ph ph-sign-out mr-2"></i>Logout
-                            </a>
+                        <div x-show="userMenuOpen" 
+                             @click.away="userMenuOpen = false"
+                             x-transition:enter="transition ease-out duration-100"
+                             x-transition:enter-start="transform opacity-0 scale-95"
+                             x-transition:enter-end="transform opacity-100 scale-100"
+                             x-transition:leave="transition ease-in duration-75"
+                             x-transition:leave-start="transform opacity-100 scale-100"
+                             x-transition:leave-end="transform opacity-0 scale-95"
+                             class="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-popover shadow-lg ring-1 ring-border ring-opacity-5 focus:outline-none" 
+                             role="menu" aria-orientation="vertical" aria-labelledby="menu-button" tabindex="-1"
+                             style="display: none;">
+                            <div class="py-1" role="none">
+                                <a href="{{ url_for('auth.logout') }}" 
+                                   class="text-foreground hover:bg-accent hover:text-accent-foreground group flex items-center px-4 py-2 text-sm"
+                                   role="menuitem" tabindex="-1">
+                                    <i class="ph ph-sign-out mr-3 h-5 w-5 text-muted-foreground group-hover:text-accent-foreground" aria-hidden="true"></i>
+                                    Sign out
+                                </a>
+                            </div>
                         </div>
                     </div>
                     {% endif %}
@@ -356,23 +424,26 @@
             </div>
         </div>
         
-        <!-- Mobile menu -->
+        <!-- Mobile Navigation Menu -->
         {% if current_user.is_authenticated %}
-        <div x-show="mobileMenu" x-transition class="border-t md:hidden">
-            <div class="grid gap-3 p-6">
-                <a href="{{ url_for('dashboard.index') }}" class="flex items-center text-sm font-medium p-2 rounded-lg hover:bg-zinc-800 transition-colors">
-                    <i class="ph ph-house mr-3 text-primary"></i>Dashboard
+        <div class="md:hidden" x-show="mobileMenuOpen" style="display: none;">
+            <div class="space-y-1 px-2 pb-3 pt-2 border-t border-border">
+                <a href="{{ url_for('dashboard.index') }}" 
+                   class="text-foreground hover:bg-accent hover:text-accent-foreground block rounded-md px-3 py-2 text-base font-medium {% if request.endpoint == 'dashboard.index' %}bg-accent text-accent-foreground{% endif %}">
+                    <i class="ph ph-house mr-2"></i>Dashboard
                 </a>
-                <a href="{{ url_for('packets.list') }}" class="flex items-center text-sm font-medium p-2 rounded-lg hover:bg-zinc-800 transition-colors">
-                    <i class="ph ph-package mr-3 text-primary"></i>Packets
+                <a href="{{ url_for('packets.list') }}" 
+                   class="text-muted-foreground hover:bg-accent hover:text-accent-foreground block rounded-md px-3 py-2 text-base font-medium {% if request.endpoint and 'packets' in request.endpoint %}bg-accent text-accent-foreground{% endif %}">
+                    <i class="ph ph-package mr-2"></i>Packets
                 </a>
-                <a href="{{ url_for('config.settings') }}" class="flex items-center text-sm font-medium p-2 rounded-lg hover:bg-zinc-800 transition-colors">
-                    <i class="ph ph-gear mr-3 text-primary"></i>Settings
+                <a href="{{ url_for('config.settings') }}" 
+                   class="text-muted-foreground hover:bg-accent hover:text-accent-foreground block rounded-md px-3 py-2 text-base font-medium {% if request.endpoint and 'config' in request.endpoint %}bg-accent text-accent-foreground{% endif %}">
+                    <i class="ph ph-gear mr-2"></i>Settings
                 </a>
             </div>
         </div>
         {% endif %}
-    </nav>
+    </header>
     
     <!-- Flash messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}

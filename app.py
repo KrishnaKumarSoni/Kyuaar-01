@@ -168,10 +168,16 @@ def handle_packet_redirect(packet_id):
                              error_message="System error",
                              error_details="An error occurred processing your request."), 500
 
-# Add redirect for root to dashboard or login
+# Customer-facing landing page
 @app.route('/')
-def index():
-    """Redirect root to appropriate page"""
+def landing():
+    """Public landing page for potential customers"""
+    return render_template('landing.html')
+
+# Redirect authenticated users to dashboard
+@app.route('/app')
+def app_redirect():
+    """Redirect authenticated users to dashboard or login"""
     from flask_login import current_user
     if current_user.is_authenticated:
         return redirect(url_for('dashboard.index'))

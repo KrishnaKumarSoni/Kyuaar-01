@@ -38,7 +38,8 @@ def index():
             'dashboard/index.html',
             stats=stats,
             recent_packets=recent_packets,
-            recent_activity=recent_activity
+            recent_activity=recent_activity,
+            packets=packets
         )
         
     except Exception as e:
@@ -53,5 +54,6 @@ def index():
                 'monthly_scans': 0
             },
             recent_packets=[],
-            recent_activity=[]
+            recent_activity=[],
+            packets=[]
         )

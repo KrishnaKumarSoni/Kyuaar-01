@@ -113,9 +113,9 @@ class Packet:
         self.config_state = 'done'
         return self.transition_to(PacketStates.CONFIG_DONE)
     
-    def calculate_price(self, price_per_qr: float = 33.0) -> float:
-        """Calculate packet price based on QR count (in INR)"""
-        return self.qr_count * price_per_qr
+    def get_sale_price(self) -> float:
+        """Get the simple sale price for this packet"""
+        return self.price or 0.0
     
     def is_ready_for_sale(self) -> bool:
         """Check if packet is ready to be sold"""
@@ -232,14 +232,10 @@ class Packet:
     def create(cls, user_id: str, qr_count: int = 25, price: float = None) -> Optional['Packet']:
         """Create new packet"""
         try:
-            # Calculate default price if not provided
-            if price is None:
-                price = qr_count * 33.0  # Default ₹33 per QR
-            
             packet = cls(
                 user_id=user_id,
                 qr_count=qr_count,
-                price=price
+                price=price or 0.0  # Simple price field, defaults to 0
             )
             
             if packet.save():
@@ -305,3 +301,28 @@ class Packet:
             created_at=created_at,
             updated_at=updated_at
         )
+    
+    def delete(self) -> bool:
+        """Delete the packet from Firestore"""
+        try:
+            db = firestore.client()
+            db.collection('packets').document(self.id).delete()
+            logger.info(f"Deleted packet {self.id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error deleting packet {self.id}: {e}")
+            return False
+    
+    @classmethod
+    def delete_by_id(cls, packet_id: str) -> bool:
+        """Delete packet by ID"""
+        try:
+            db = firestore.client()
+            db.collection('packets').document(packet_id).delete()
+            logger.info(f"Deleted packet {packet_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error deleting packet {packet_id}: {e}")
+            return False

@@ -16,6 +16,7 @@ class ActivityType:
     PACKET_UPLOADED = 'packet_uploaded'
     PACKET_SOLD = 'packet_sold'
     PACKET_CONFIGURED = 'packet_configured'
+    PACKET_DELETED = 'packet_deleted'
     USER_LOGIN = 'user_login'
     USER_REGISTER = 'user_register'
 

@@ -12,6 +12,7 @@ from firebase_admin import firestore, storage
 from models.packet import Packet, PacketStates
 from models.activity import Activity, ActivityType
 from models.user import User
+from services.qr_generator import qr_generator
 
 api_bp = Blueprint('api', __name__)
 logger = logging.getLogger(__name__)
@@ -273,7 +274,7 @@ def get_user_activity():
 
 # ============= PACKET CONFIGURATION API (Customer-facing) =============
 
-@api_bp.route('/packet/<packet_id>/configure', methods=['POST'])
+@api_bp.route('/packets/<packet_id>/configure', methods=['POST'])
 def configure_packet_redirect(packet_id):
     """Configure packet redirect (customer-facing, no auth required)"""
     try:
@@ -352,7 +353,7 @@ def configure_packet_redirect(packet_id):
         logger.error(f"Error configuring packet {packet_id}: {e}")
         return jsonify({'error': 'Failed to configure packet'}), 500
 
-@api_bp.route('/packet/<packet_id>/status', methods=['GET'])
+@api_bp.route('/packets/<packet_id>/status', methods=['GET'])
 def get_packet_status(packet_id):
     """Get packet status (customer-facing, no auth required)"""
     try:
@@ -375,3 +376,146 @@ def get_packet_status(packet_id):
     except Exception as e:
         logger.error(f"Error getting packet status: {e}")
         return jsonify({'error': 'Failed to get packet status'}), 500
+
+# ============= QR CODE GENERATION API =============
+
+@api_bp.route('/qr/generate', methods=['POST'])
+@login_required
+def generate_qr_code():
+    """Generate QR code with custom styling"""
+    try:
+        data = request.get_json()
+        
+        # Validate required fields
+        url = data.get('url')
+        packet_id = data.get('packet_id')
+        
+        if not url:
+            return jsonify({'error': 'URL is required'}), 400
+        
+        # Get settings
+        settings = data.get('settings', {})
+        
+        # Generate QR code
+        result = qr_generator.generate_qr_code(url, packet_id, settings)
+        
+        if not result.get('success'):
+            return jsonify({'error': result.get('error', 'Failed to generate QR code')}), 500
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        logger.error(f"Error generating QR code: {e}")
+        return jsonify({'error': 'Failed to generate QR code'}), 500
+
+@api_bp.route('/qr/save', methods=['POST'])
+@login_required
+def save_qr_code():
+    """Save generated QR code to Firebase"""
+    try:
+        data = request.get_json()
+        
+        # Validate required fields
+        image_base64 = data.get('image_base64')
+        packet_id = data.get('packet_id')
+        url = data.get('url')
+        settings = data.get('settings', {})
+        
+        if not all([image_base64, packet_id, url]):
+            return jsonify({'error': 'Missing required fields'}), 400
+        
+        # Verify packet ownership
+        packet = Packet.get_by_id_and_user(packet_id, current_user.id)
+        if not packet:
+            return jsonify({'error': 'Packet not found'}), 404
+        
+        # Convert base64 to bytes
+        import base64
+        image_data = base64.b64decode(image_base64)
+        
+        # Generate filename
+        filename = f"qr_code_{packet_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+        
+        # Save to Firebase Storage
+        image_url = qr_generator.save_to_firebase(image_data, filename, packet_id, settings)
+        
+        if not image_url:
+            return jsonify({'error': 'Failed to save image to Firebase'}), 500
+        
+        # Save record to Firestore
+        success = qr_generator.save_qr_record_to_firestore(packet_id, url, settings, image_url)
+        
+        if not success:
+            return jsonify({'error': 'Failed to save QR code record'}), 500
+        
+        # Log activity
+        Activity.log(
+            user_id=current_user.id,
+            activity_type=ActivityType.PACKET_UPLOADED,  # Reusing existing type
+            title='QR Code Generated',
+            description=f'Generated custom QR code for packet {packet_id}',
+            metadata={
+                'packet_id': packet_id,
+                'url': url,
+                'settings': settings,
+                'image_url': image_url
+            }
+        )
+        
+        return jsonify({
+            'message': 'QR code saved successfully',
+            'image_url': image_url,
+            'packet_id': packet_id
+        })
+        
+    except Exception as e:
+        logger.error(f"Error saving QR code: {e}")
+        return jsonify({'error': 'Failed to save QR code'}), 500
+
+@api_bp.route('/qr/presets', methods=['GET'])
+@login_required
+def get_qr_presets():
+    """Get available QR code style presets"""
+    try:
+        presets = qr_generator.get_style_presets()
+        return jsonify({'presets': presets})
+        
+    except Exception as e:
+        logger.error(f"Error getting QR presets: {e}")
+        return jsonify({'error': 'Failed to get QR presets'}), 500
+
+@api_bp.route('/qr/packet/<packet_id>', methods=['GET'])
+@login_required
+def get_packet_qr_codes(packet_id):
+    """Get all QR codes generated for a packet"""
+    try:
+        # Verify packet ownership
+        packet = Packet.get_by_id_and_user(packet_id, current_user.id)
+        if not packet:
+            return jsonify({'error': 'Packet not found'}), 404
+        
+        # Get QR codes from Firestore
+        db = firestore.client()
+        qr_codes = []
+        
+        docs = db.collection('qr_codes').where('packet_id', '==', packet_id).get()
+        
+        for doc in docs:
+            qr_data = doc.to_dict()
+            qr_data['id'] = doc.id
+            # Convert datetime to string for JSON serialization
+            if 'created_at' in qr_data and qr_data['created_at']:
+                qr_data['created_at'] = qr_data['created_at'].isoformat()
+            if 'updated_at' in qr_data and qr_data['updated_at']:
+                qr_data['updated_at'] = qr_data['updated_at'].isoformat()
+            qr_codes.append(qr_data)
+        
+        return jsonify({
+            'qr_codes': qr_codes,
+            'count': len(qr_codes),
+            'packet_id': packet_id
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting QR codes for packet {packet_id}: {e}")
+        return jsonify({'error': 'Failed to get QR codes'}), 500

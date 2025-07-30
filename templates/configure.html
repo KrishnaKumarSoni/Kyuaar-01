@@ -8,119 +8,254 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Tailwind Config for Dark Mode and Custom Colors -->
+    <!-- Tailwind config for shadcn/ui theming -->
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
+                container: {
+                    center: true,
+                    padding: '2rem',
+                    screens: {
+                        '2xl': '1400px',
+                    },
+                },
                 extend: {
                     colors: {
-                        primary: '#CC5500',
-                        'primary-dark': '#AA4500',
-                    }
-                }
-            }
+                        border: 'hsl(var(--border))',
+                        input: 'hsl(var(--input))',
+                        ring: 'hsl(var(--ring))',
+                        background: 'hsl(var(--background))',
+                        foreground: 'hsl(var(--foreground))',
+                        primary: {
+                            DEFAULT: 'hsl(var(--primary))',
+                            foreground: 'hsl(var(--primary-foreground))',
+                        },
+                        secondary: {
+                            DEFAULT: 'hsl(var(--secondary))',
+                            foreground: 'hsl(var(--secondary-foreground))',
+                        },
+                        destructive: {
+                            DEFAULT: 'hsl(var(--destructive))',
+                            foreground: 'hsl(var(--destructive-foreground))',
+                        },
+                        muted: {
+                            DEFAULT: 'hsl(var(--muted))',
+                            foreground: 'hsl(var(--muted-foreground))',
+                        },
+                        accent: {
+                            DEFAULT: 'hsl(var(--accent))',
+                            foreground: 'hsl(var(--accent-foreground))',
+                        },
+                        popover: {
+                            DEFAULT: 'hsl(var(--popover))',
+                            foreground: 'hsl(var(--popover-foreground))',
+                        },
+                        card: {
+                            DEFAULT: 'hsl(var(--card))',
+                            foreground: 'hsl(var(--card-foreground))',
+                        },
+                    },
+                    borderRadius: {
+                        lg: 'var(--radius)',
+                        md: 'calc(var(--radius) - 2px)',
+                        sm: 'calc(var(--radius) - 4px)',
+                    },
+                },
+            },
         }
     </script>
     
+    <!-- Phosphor Icons -->
+    <script src="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/regular/style.css">
+    
+    <!-- Dark mode with burnt orange theme -->
     <style>
-        .loader {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #CC5500;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            animation: spin 1s linear infinite;
+        /* Force dark mode always */
+        * {
+            box-sizing: border-box;
         }
         
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        body {
+            background-color: #09090b !important; /* zinc-950 */
+            color: #fafafa !important; /* zinc-50 */
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        
+        /* Primary burnt orange colors */
+        .text-primary { color: #CC5500 !important; }
+        .bg-primary { background-color: #CC5500 !important; }
+        .border-primary { border-color: #CC5500 !important; }
+        
+        /* Buttons - Base styles */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            font-size: 0.875rem;
+            line-height: 1.25rem;
+            transition: all 0.2s;
+            cursor: pointer;
+            border: 1px solid transparent;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            min-height: 2.5rem;
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* Primary Button */
+        .btn-primary {
+            background-color: #CC5500 !important;
+            color: white !important;
+            border-color: #CC5500 !important;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            background-color: #FF6600 !important;
+            border-color: #FF6600 !important;
+            color: white !important;
+        }
+        
+        /* Cards */
+        .card {
+            background-color: #18181b !important; /* zinc-900 */
+            border: 1px solid #27272a !important; /* zinc-800 */
+            color: #fafafa !important;
+            border-radius: 0.5rem;
+        }
+        
+        /* Inputs */
+        input, textarea, select {
+            background-color: #18181b !important; /* zinc-900 */
+            border: 1px solid #27272a !important; /* zinc-800 */
+            color: #fafafa !important;
+        }
+        
+        input:focus, textarea:focus, select:focus {
+            outline: none !important;
+            border-color: #CC5500 !important;
+            box-shadow: 0 0 0 2px rgba(204, 85, 0, 0.2) !important;
+        }
+        
+        input::placeholder, textarea::placeholder {
+            color: #71717a !important; /* zinc-500 */
+        }
+        
+        /* Radio buttons */
+        input[type="radio"] {
+            accent-color: #CC5500 !important;
+        }
+        
+        /* Phosphor Icons - Ensure they display properly */
+        i[class*="ph"], i[class*="ph-"] {
+            font-family: "Phosphor" !important;
+            font-style: normal;
+            font-weight: normal;
+            line-height: 1;
+            display: inline-block;
         }
     </style>
 </head>
-<body class="bg-gray-900 text-white min-h-screen">
+<body class="min-h-screen">
     <div class="container mx-auto px-4 py-8 max-w-md">
         <!-- Header -->
         <div class="text-center mb-8">
-            <h1 class="text-2xl font-bold text-primary mb-2">Kyuaar Configuration</h1>
-            <p class="text-gray-400">Configure your QR packet redirect</p>
+            <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full border-2 border-primary mb-4" style="background-color: rgba(204, 85, 0, 0.1);">
+                <i class="ph ph-qr-code text-3xl text-primary"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-foreground mb-2">QR Packet Configuration</h1>
+            <p class="text-muted-foreground">Configure your QR packet redirect</p>
         </div>
 
         <!-- Configuration Form -->
-        <div class="bg-gray-800 rounded-lg p-6 shadow-lg">
+        <div class="card p-6 shadow-lg">
             <form id="configForm">
                 <!-- Redirect Type Selection -->
                 <div class="mb-6">
-                    <label class="block text-sm font-medium text-gray-300 mb-3">
+                    <label class="block text-sm font-medium text-foreground mb-3">
                         Choose redirect type:
                     </label>
                     <div class="space-y-3">
                         <label class="flex items-center space-x-3 cursor-pointer">
                             <input type="radio" name="redirect_type" value="whatsapp" 
-                                   class="text-primary bg-gray-700 border-gray-600 focus:ring-primary" checked>
-                            <span class="text-white">WhatsApp</span>
+                                   class="text-primary bg-zinc-800 border-zinc-700 focus:ring-primary" checked>
+                            <span class="text-foreground">WhatsApp</span>
                         </label>
                         <label class="flex items-center space-x-3 cursor-pointer">
                             <input type="radio" name="redirect_type" value="custom" 
-                                   class="text-primary bg-gray-700 border-gray-600 focus:ring-primary">
-                            <span class="text-white">Custom URL</span>
+                                   class="text-primary bg-zinc-800 border-zinc-700 focus:ring-primary">
+                            <span class="text-foreground">Custom URL</span>
                         </label>
                     </div>
                 </div>
 
                 <!-- WhatsApp Configuration -->
                 <div id="whatsapp-config" class="mb-6">
-                    <label for="phone" class="block text-sm font-medium text-gray-300 mb-2">
+                    <label for="phone" class="block text-sm font-medium text-foreground mb-2">
                         WhatsApp Phone Number
                     </label>
                     <input type="tel" id="phone" name="phone" 
                            placeholder="Enter phone number (e.g., 9166900151)"
-                           class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
-                    <p class="text-xs text-gray-400 mt-1">Include country code if outside India</p>
+                           class="w-full px-3 py-2 rounded-lg border border-zinc-800 bg-zinc-900 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors">
+                    <p class="text-xs text-muted-foreground mt-1">Include country code if outside India</p>
                 </div>
 
                 <!-- Custom URL Configuration -->
                 <div id="custom-config" class="mb-6 hidden">
-                    <label for="custom_url" class="block text-sm font-medium text-gray-300 mb-2">
+                    <label for="custom_url" class="block text-sm font-medium text-foreground mb-2">
                         Custom URL
                     </label>
                     <input type="url" id="custom_url" name="custom_url" 
                            placeholder="https://example.com"
-                           class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                           class="w-full px-3 py-2 rounded-lg border border-zinc-800 bg-zinc-900 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors">
                 </div>
 
                 <!-- Current Configuration (if exists) -->
                 {% if current_redirect %}
-                <div class="mb-6 p-4 bg-gray-700 rounded-md">
-                    <h3 class="text-sm font-medium text-gray-300 mb-2">Current Configuration:</h3>
-                    <p class="text-white text-sm break-all">{{ current_redirect }}</p>
+                <div class="mb-6 p-4 card">
+                    <h3 class="text-sm font-medium text-foreground mb-2">Current Configuration:</h3>
+                    <p class="text-foreground text-sm break-all">{{ current_redirect }}</p>
                 </div>
                 {% endif %}
 
                 <!-- Submit Button -->
                 <button type="submit" id="submitBtn" 
-                        class="w-full bg-primary hover:bg-primary-dark text-white font-medium py-2 px-4 rounded-md transition duration-200 flex items-center justify-center">
+                        class="btn btn-primary w-full">
                     <span id="submitText">Configure</span>
-                    <div id="submitLoader" class="loader ml-2 hidden"></div>
+                    <i id="submitLoader" class="ph ph-circle-notch animate-spin ml-2 hidden"></i>
                 </button>
             </form>
 
             <!-- Success Message -->
-            <div id="successMessage" class="hidden mt-4 p-4 bg-green-800 border border-green-600 rounded-md">
-                <p class="text-green-200 text-sm">Configuration saved successfully!</p>
-                <p class="text-green-300 text-xs mt-1">Your QR codes will now redirect to the configured destination.</p>
+            <div id="successMessage" class="hidden mt-4 p-4 rounded-lg bg-green-900/20 border border-green-800">
+                <div class="flex items-center">
+                    <i class="ph ph-check-circle text-green-500 mr-2"></i>
+                    <div>
+                        <p class="text-green-400 text-sm font-medium">Configuration saved successfully!</p>
+                        <p class="text-green-300 text-xs mt-1">Your QR codes will now redirect to the configured destination.</p>
+                    </div>
+                </div>
             </div>
 
             <!-- Error Message -->
-            <div id="errorMessage" class="hidden mt-4 p-4 bg-red-800 border border-red-600 rounded-md">
-                <p class="text-red-200 text-sm" id="errorText">An error occurred. Please try again.</p>
+            <div id="errorMessage" class="hidden mt-4 p-4 rounded-lg bg-red-900/20 border border-red-800">
+                <div class="flex items-center">
+                    <i class="ph ph-warning text-red-500 mr-2"></i>
+                    <p class="text-red-400 text-sm" id="errorText">An error occurred. Please try again.</p>
+                </div>
             </div>
         </div>
 
         <!-- Footer -->
         <div class="text-center mt-8">
-            <p class="text-gray-500 text-sm">
+            <p class="text-muted-foreground text-sm">
                 Powered by <span class="text-primary font-semibold">Kyuaar</span>
             </p>
         </div>
