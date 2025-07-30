@@ -5,29 +5,46 @@ Handles customizable QR code generation with various styling options
 
 import qrcode
 from qrcode.image.styledpil import StyledPilImage
-from qrcode.image.styles.moduledrawers import (
-    SquareModuleDrawer, 
-    CircleModuleDrawer, 
-    RoundedModuleDrawer,
-    VerticalBarsDrawer,
-    HorizontalBarsDrawer
-)
+try:
+    from qrcode.image.styles.moduledrawers.pil import (
+        SquareModuleDrawer, 
+        CircleModuleDrawer, 
+        RoundedModuleDrawer,
+        VerticalBarsDrawer,
+        HorizontalBarsDrawer
+    )
+except ImportError:
+    from qrcode.image.styles.moduledrawers import (
+        SquareModuleDrawer, 
+        CircleModuleDrawer, 
+        RoundedModuleDrawer,
+        VerticalBarsDrawer,
+        HorizontalBarsDrawer
+    )
 from qrcode.image.styles.colormasks import (
     SolidFillColorMask,
     RadialGradiantColorMask,
     SquareGradiantColorMask
 )
 try:
-    from qrcode.image.styles.eyedrawers import (
+    from qrcode.image.styles.eyedrawers.pil import (
         SquareEyeDrawer,
         CircleEyeDrawer,
         RoundedEyeDrawer
     )
 except ImportError:
-    # Fallback for older qrcode versions
-    SquareEyeDrawer = None
-    CircleEyeDrawer = None
-    RoundedEyeDrawer = None
+    try:
+        # Try alternative import path
+        from qrcode.image.styles.eyedrawers import (
+            SquareEyeDrawer,
+            CircleEyeDrawer,
+            RoundedEyeDrawer
+        )
+    except ImportError:
+        # Fallback for older qrcode versions
+        SquareEyeDrawer = None
+        CircleEyeDrawer = None
+        RoundedEyeDrawer = None
 from PIL import Image, ImageDraw
 import io
 import base64
