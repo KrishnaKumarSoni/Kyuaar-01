@@ -59,6 +59,16 @@ class QRGenerator:
     def __init__(self):
         self.style_options = QRStyleOptions()
     
+    def _hex_to_rgb(self, hex_color: str) -> Tuple[int, int, int]:
+        """Convert hex color to RGB tuple"""
+        try:
+            if hex_color.startswith('#'):
+                hex_color = hex_color[1:]
+            return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+        except (ValueError, IndexError):
+            # Return black as default
+            return (0, 0, 0)
+    
     def generate_qr_code(
         self,
         data: str,
@@ -139,6 +149,8 @@ class QRGenerator:
     def _create_styled_image(self, qr: qrcode.QRCode, settings: Dict[str, Any]) -> Image.Image:
         """Create a styled QR code image based on settings"""
         
+        logger.info(f"Creating styled image with settings: {settings}")
+        
         # Get module drawer
         module_drawer = self.style_options.MODULE_DRAWERS.get(
             settings['module_drawer'], 
@@ -152,24 +164,37 @@ class QRGenerator:
         )
         
         if settings['color_mask'] == 'solid':
+            # Convert hex colors to RGB tuples
+            fill_color = self._hex_to_rgb(settings['fill_color'])
+            back_color = self._hex_to_rgb(settings['back_color'])
+            
             color_mask = color_mask_class(
-                front_color=settings['fill_color'],
-                back_color=settings['back_color']
+                front_color=fill_color,
+                back_color=back_color
             )
         elif settings['color_mask'] in ['radial_gradient', 'square_gradient']:
-            # Use gradient colors
+            # Use gradient colors - convert hex to RGB
             gradient_colors = settings.get('gradient_colors', [
                 self.style_options.DEFAULT_PRIMARY_COLOR,
                 self.style_options.DEFAULT_FILL_COLOR
             ])
+            center_color = self._hex_to_rgb(gradient_colors[0])
+            edge_color = self._hex_to_rgb(gradient_colors[1])
+            
+            back_color = self._hex_to_rgb(settings.get('back_color', '#FFFFFF'))
             color_mask = color_mask_class(
-                center_color=gradient_colors[0],
-                edge_color=gradient_colors[1]
+                center_color=center_color,
+                edge_color=edge_color,
+                back_color=back_color
             )
         else:
+            # Fallback to solid with converted colors
+            fill_color = self._hex_to_rgb(settings['fill_color'])
+            back_color = self._hex_to_rgb(settings['back_color'])
+            
             color_mask = color_mask_class(
-                front_color=settings['fill_color'],
-                back_color=settings['back_color']
+                front_color=fill_color,
+                back_color=back_color
             )
         
         # Generate styled image
