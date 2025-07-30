@@ -39,7 +39,14 @@ try:
         cred_dict = json.loads(os.environ.get('FIREBASE_CREDENTIALS'))
         cred = credentials.Certificate(cred_dict)
     else:
-        cred = credentials.Certificate('firebase-credentials.json')
+        # Use the specific Firebase credentials file
+        cred_file = 'kyuaar-01-firebase-adminsdk-fbsvc-6ffa60ee84.json'
+        if os.path.exists(cred_file):
+            cred = credentials.Certificate(cred_file)
+            logger.info(f"Using credentials from: {cred_file}")
+        else:
+            # Fallback to the original name
+            cred = credentials.Certificate('firebase-credentials.json')
     
     firebase_admin.initialize_app(cred, {
         'storageBucket': os.environ.get('FIREBASE_STORAGE_BUCKET', 'kyuaar-packets.appspot.com')

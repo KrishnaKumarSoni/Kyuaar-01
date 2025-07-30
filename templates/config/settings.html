@@ -16,7 +16,7 @@
         <div class="card">
             <div class="p-6 border-b border-zinc-800">
                 <h2 class="text-xl font-semibold flex items-center">
-                    <i class="ph-user mr-2 text-primary"></i>
+                    <i class="ph ph-user mr-2 text-primary text-lg"></i>
                     Profile Settings
                 </h2>
             </div>
@@ -24,33 +24,33 @@
                 <form class="space-y-4" x-data="profileForm()">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="space-y-2">
-                            <label for="name" class="label">Full Name</label>
+                            <label for="name" class="block text-sm font-medium text-foreground mb-2">Full Name</label>
                             <input 
                                 id="name" 
                                 name="name" 
                                 type="text" 
-                                class="input"
+                                class="w-full px-3 py-2 rounded-lg border border-zinc-800 bg-zinc-900 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
                                 :value="name"
                                 placeholder="Your full name"
                             >
                         </div>
                         <div class="space-y-2">
-                            <label for="email" class="label">Email Address</label>
+                            <label for="email" class="block text-sm font-medium text-foreground mb-2">Email Address</label>
                             <input 
                                 id="email" 
                                 name="email" 
                                 type="email" 
-                                class="input"
+                                class="w-full px-3 py-2 rounded-lg border border-zinc-800 bg-zinc-800 text-zinc-400 placeholder-zinc-500 cursor-not-allowed"
                                 :value="email"
                                 placeholder="your@email.com"
                                 disabled
                             >
-                            <p class="text-xs text-zinc-400">Email cannot be changed</p>
+                            <p class="text-xs text-muted-foreground">Email cannot be changed</p>
                         </div>
                     </div>
                     <div class="flex justify-end">
                         <button type="submit" class="btn btn-primary">
-                            <i class="ph-floppy-disk mr-2"></i>
+                            <i class="ph ph-floppy-disk mr-2"></i>
                             Save Changes
                         </button>
                     </div>
@@ -62,47 +62,47 @@
         <div class="card">
             <div class="p-6 border-b border-zinc-800">
                 <h2 class="text-xl font-semibold flex items-center">
-                    <i class="ph-shield mr-2 text-primary"></i>
+                    <i class="ph ph-shield mr-2 text-primary text-lg"></i>
                     Security Settings
                 </h2>
             </div>
             <div class="p-6">
                 <form class="space-y-4" x-data="passwordForm()">
                     <div class="space-y-2">
-                        <label for="current_password" class="label">Current Password</label>
+                        <label for="current_password" class="block text-sm font-medium text-foreground mb-2">Current Password</label>
                         <input 
                             id="current_password" 
                             name="current_password" 
                             type="password" 
-                            class="input"
+                            class="w-full px-3 py-2 rounded-lg border border-zinc-800 bg-zinc-900 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
                             placeholder="Enter current password"
                         >
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="space-y-2">
-                            <label for="new_password" class="label">New Password</label>
+                            <label for="new_password" class="block text-sm font-medium text-foreground mb-2">New Password</label>
                             <input 
                                 id="new_password" 
                                 name="new_password" 
                                 type="password" 
-                                class="input"
+                                class="w-full px-3 py-2 rounded-lg border border-zinc-800 bg-zinc-900 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
                                 placeholder="Enter new password"
                             >
                         </div>
                         <div class="space-y-2">
-                            <label for="confirm_password" class="label">Confirm New Password</label>
+                            <label for="confirm_password" class="block text-sm font-medium text-foreground mb-2">Confirm New Password</label>
                             <input 
                                 id="confirm_password" 
                                 name="confirm_password" 
                                 type="password" 
-                                class="input"
+                                class="w-full px-3 py-2 rounded-lg border border-zinc-800 bg-zinc-900 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
                                 placeholder="Confirm new password"
                             >
                         </div>
                     </div>
                     <div class="flex justify-end">
                         <button type="submit" class="btn btn-primary">
-                            <i class="ph-lock mr-2"></i>
+                            <i class="ph ph-lock mr-2"></i>
                             Update Password
                         </button>
                     </div>
@@ -114,7 +114,7 @@
         <div class="card">
             <div class="p-6 border-b border-zinc-800">
                 <h2 class="text-xl font-semibold flex items-center">
-                    <i class="ph-palette mr-2 text-primary"></i>
+                    <i class="ph ph-palette mr-2 text-primary text-lg"></i>
                     Appearance
                 </h2>
             </div>
@@ -127,10 +127,10 @@
                         </div>
                         <div class="flex items-center space-x-2">
                             <button onclick="setTheme('light')" class="btn btn-ghost p-2" title="Light theme">
-                                <i class="ph-sun text-xl"></i>
+                                <i class="ph ph-sun text-xl"></i>
                             </button>
                             <button onclick="setTheme('dark')" class="btn btn-ghost p-2" title="Dark theme">
-                                <i class="ph-moon text-xl"></i>
+                                <i class="ph ph-moon text-xl"></i>
                             </button>
                         </div>
                     </div>
@@ -142,7 +142,7 @@
         <div class="card">
             <div class="p-6 border-b border-zinc-800">
                 <h2 class="text-xl font-semibold flex items-center">
-                    <i class="ph-bell mr-2 text-primary"></i>
+                    <i class="ph ph-bell mr-2 text-primary"></i>
                     Notifications
                 </h2>
             </div>
@@ -176,7 +176,7 @@
         <div class="card border-red-800">
             <div class="p-6 border-b border-red-800">
                 <h2 class="text-xl font-semibold flex items-center text-red-400">
-                    <i class="ph-warning mr-2"></i>
+                    <i class="ph ph-warning mr-2"></i>
                     Danger Zone
                 </h2>
             </div>
@@ -188,7 +188,7 @@
                             <p class="text-sm text-zinc-400">Permanently delete your account and all data</p>
                         </div>
                         <button class="btn bg-red-900 hover:bg-red-800 text-red-100 border-red-800">
-                            <i class="ph-trash mr-2"></i>
+                            <i class="ph ph-trash mr-2"></i>
                             Delete Account
                         </button>
                     </div>

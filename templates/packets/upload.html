@@ -13,7 +13,7 @@
     <div class="mb-8">
         <div class="flex items-center mb-4">
             <a href="{{ url_for('packets.list') }}" class="btn btn-ghost p-2 mr-3">
-                <i class="ph-arrow-left"></i>
+                <i class="ph ph-arrow-left text-lg"></i>
             </a>
             <div>
                 <h1 class="text-3xl font-bold">
@@ -32,7 +32,7 @@
         {% if packet %}
         <div class="card p-4 bg-blue-500/10 border-blue-500/20">
             <div class="flex items-center">
-                <i class="ph-info text-blue-400 mr-2"></i>
+                <i class="ph ph-info text-blue-400 mr-2"></i>
                 <div>
                     <p class="text-blue-300 font-medium">Packet Information</p>
                     <p class="text-blue-200 text-sm">{{ packet.qr_count }} QR codes • State: {{ packet.state.replace('_', ' ').title() }}</p>
@@ -48,7 +48,7 @@
             <!-- File Upload -->
             <div class="card p-6">
                 <h2 class="text-lg font-semibold mb-4 flex items-center">
-                    <i class="ph-upload mr-2 text-primary"></i>
+                    <i class="ph ph-upload mr-2 text-primary text-lg"></i>
                     Upload Image
                 </h2>
                 
@@ -67,7 +67,7 @@
                         >
                             <div class="flex flex-col items-center space-y-3">
                                 <div class="p-3 rounded-full bg-zinc-800">
-                                    <i class="ph-upload text-2xl text-zinc-400"></i>
+                                    <i class="ph ph-upload text-2xl text-zinc-400"></i>
                                 </div>
                                 <div>
                                     <p class="font-medium">Drop QR image here</p>
@@ -94,11 +94,11 @@
                             x-show="selectedFile"
                         >
                             <span x-show="!uploading" class="flex items-center justify-center">
-                                <i class="ph-upload mr-2"></i>
+                                <i class="ph ph-upload mr-2"></i>
                                 Upload QR Image
                             </span>
                             <span x-show="uploading" class="flex items-center justify-center">
-                                <i class="ph-circle-notch animate-spin mr-2"></i>
+                                <i class="ph ph-circle-notch animate-spin mr-2"></i>
                                 Uploading...
                             </span>
                         </button>
@@ -116,7 +116,7 @@
                     >
                         <div class="flex flex-col items-center space-y-3">
                             <div class="p-3 rounded-full bg-zinc-800">
-                                <i class="ph-image text-2xl text-zinc-400"></i>
+                                <i class="ph ph-image text-2xl text-zinc-400"></i>
                             </div>
                             <div>
                                 <p class="font-medium">Drop QR code image here</p>
@@ -140,7 +140,7 @@
             <!-- Camera Scan -->
             <div class="card p-6">
                 <h2 class="text-lg font-semibold mb-4 flex items-center">
-                    <i class="ph-camera mr-2 text-primary"></i>
+                    <i class="ph ph-camera mr-2 text-primary text-lg"></i>
                     Scan with Camera
                 </h2>
                 
@@ -150,7 +150,7 @@
                         class="btn w-full"
                         :class="cameraActive ? 'btn-secondary' : 'btn-primary'"
                     >
-                        <i :class="cameraActive ? 'ph-camera-slash' : 'ph-camera'" class="mr-2"></i>
+                        <i :class="cameraActive ? 'ph ph-camera-slash' : 'ph ph-camera'" class="mr-2"></i>
                         <span x-text="cameraActive ? 'Stop Camera' : 'Start Camera'"></span>
                     </button>
                     
@@ -179,19 +179,19 @@
             <!-- Scan Result -->
             <div class="card p-6">
                 <h2 class="text-lg font-semibold mb-4 flex items-center">
-                    <i class="ph-qr-code mr-2 text-primary"></i>
+                    <i class="ph ph-qr-code mr-2 text-primary text-lg"></i>
                     Scan Result
                 </h2>
                 
                 <div x-show="!scanResult && !loading" class="text-center py-8">
                     <div class="p-3 rounded-full bg-zinc-800 inline-flex mb-3">
-                        <i class="ph-qr-code text-2xl text-zinc-600"></i>
+                        <i class="ph ph-qr-code text-2xl text-zinc-600"></i>
                     </div>
                     <p class="text-zinc-400">Upload an image or use camera to scan QR code</p>
                 </div>
                 
                 <div x-show="loading" class="text-center py-8">
-                    <i class="ph-circle-notch animate-spin text-2xl text-primary mb-3"></i>
+                    <i class="ph ph-circle-notch animate-spin text-2xl text-primary mb-3"></i>
                     <p class="text-zinc-400">Scanning QR code...</p>
                 </div>
                 
@@ -203,11 +203,11 @@
                     
                     <div class="flex items-center justify-between">
                         <button @click="copyToClipboard" class="btn btn-ghost text-sm">
-                            <i class="ph-copy mr-2"></i>
+                            <i class="ph ph-copy mr-2"></i>
                             Copy URL
                         </button>
                         <button @click="createPacketFromScan" class="btn btn-primary">
-                            <i class="ph-plus mr-2"></i>
+                            <i class="ph ph-plus mr-2"></i>
                             Create Packet
                         </button>
                     </div>
@@ -215,7 +215,7 @@
                 
                 <div x-show="error" class="p-4 rounded-lg bg-red-900/20 border border-red-800">
                     <div class="flex items-center">
-                        <i class="ph-warning text-red-500 mr-2"></i>
+                        <i class="ph ph-warning text-red-500 mr-2"></i>
                         <p class="text-red-400 text-sm" x-text="error"></p>
                     </div>
                 </div>
@@ -224,7 +224,7 @@
             <!-- Preview -->
             <div class="card p-6" x-show="previewImage">
                 <h2 class="text-lg font-semibold mb-4 flex items-center">
-                    <i class="ph-image mr-2 text-primary"></i>
+                    <i class="ph ph-image mr-2 text-primary text-lg"></i>
                     Image Preview
                 </h2>
                 

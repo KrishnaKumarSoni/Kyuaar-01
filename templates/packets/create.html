@@ -2,17 +2,22 @@
 
 {% block title %}Create Packet - Kyuaar{% endblock %}
 
+{% block extra_head %}
+<!-- jsQR Library for QR Code scanning -->
+<script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
+{% endblock %}
+
 {% block content %}
 <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <!-- Header -->
     <div class="mb-8">
         <div class="flex items-center mb-4">
             <a href="{{ url_for('packets.list') }}" class="btn btn-ghost p-2 mr-3">
-                <i class="ph-arrow-left"></i>
+                <i class="ph ph-arrow-left"></i>
             </a>
             <div>
                 <h1 class="text-3xl font-bold">Create New Packet</h1>
-                <p class="text-zinc-400">Set up a new QR code packet with redirect settings</p>
+                <p class="text-zinc-400">Set up a new QR code packet with pricing and upload QR image</p>
             </div>
         </div>
     </div>
@@ -23,12 +28,12 @@
             <!-- Packet Configuration -->
             <div class="space-y-4">
                 <h2 class="text-lg font-semibold flex items-center">
-                    <i class="ph-package mr-2 text-primary"></i>
+                    <i class="ph ph-package mr-2 text-primary"></i>
                     Packet Configuration
                 </h2>
                 
                 <div class="space-y-2">
-                    <label for="qr_count" class="label">Number of QR Codes *</label>
+                    <label for="qr_count" class="block text-sm font-medium text-foreground mb-2">Number of QR Codes *</label>
                     <input 
                         id="qr_count" 
                         name="qr_count" 
@@ -38,41 +43,183 @@
                         required
                         x-model="qrCount"
                         @blur="validateQrCount"
-                        class="input" 
+                        class="w-full px-3 py-2 rounded-lg border border-zinc-800 bg-zinc-900 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors" 
                         placeholder="25"
                         value="25"
                     >
                     <p x-show="errors.qrCount" x-text="errors.qrCount" class="text-sm text-red-500"></p>
-                    <p class="text-xs text-zinc-400">Number of QR codes in this packet (1-100)</p>
+                    <p class="text-xs text-muted-foreground">Number of QR codes in this packet (1-100)</p>
                 </div>
                 
                 <div class="card p-4 bg-zinc-800/50">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="font-medium">Estimated Price</p>
-                            <p class="text-sm text-zinc-400">$0.40 per QR code</p>
+                            <p class="font-medium">Estimated Cost</p>
+                            <p class="text-sm text-zinc-400">₹33 per QR code</p>
                         </div>
                         <div class="text-right">
-                            <p class="text-2xl font-bold text-primary" x-text="'$' + (qrCount * 0.40).toFixed(2)"></p>
+                            <p class="text-2xl font-bold text-primary" x-text="'₹' + (qrCount * 33).toFixed(0)"></p>
                             <p class="text-xs text-zinc-400">Total cost</p>
                         </div>
                     </div>
                 </div>
             </div>
             
-            <!-- Information -->
+            <!-- Pricing Configuration -->
             <div class="space-y-4 border-t border-zinc-800 pt-6">
-                <div class="card p-4 bg-blue-500/10 border-blue-500/20">
-                    <div class="flex items-start space-x-3">
-                        <i class="ph-info text-blue-400 mt-0.5"></i>
-                        <div class="text-sm">
-                            <p class="text-blue-300 font-medium mb-1">Next Steps</p>
-                            <ul class="text-blue-200 space-y-1 text-xs">
-                                <li>1. Create your packet</li>
-                                <li>2. Upload a QR code image</li>
-                                <li>3. Mark packet as sold to customer</li>
-                                <li>4. Customer configures redirect URL</li>
-                            </ul>
+                <h2 class="text-lg font-semibold flex items-center">
+                    <i class="ph ph-currency-circle-dollar mr-2 text-primary"></i>
+                    Pricing Configuration
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                        <label for="price_per_scan" class="block text-sm font-medium text-foreground mb-2">Price per QR Scan *</label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-400">₹</span>
+                            <input 
+                                id="price_per_scan" 
+                                name="price_per_scan" 
+                                type="number" 
+                                min="1"
+                                max="1000"
+                                step="1"
+                                required
+                                x-model="pricePerScan"
+                                @blur="validatePricePerScan"
+                                class="w-full pl-8 pr-3 py-2 rounded-lg border border-zinc-800 bg-zinc-900 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors" 
+                                placeholder="50"
+                                value="50"
+                            >
+                        </div>
+                        <p x-show="errors.pricePerScan" x-text="errors.pricePerScan" class="text-sm text-red-500"></p>
+                        <p class="text-xs text-muted-foreground">Amount customer pays per QR code scan</p>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <label for="redirect_url" class="block text-sm font-medium text-foreground mb-2">Default Redirect URL *</label>
+                        <input 
+                            id="redirect_url" 
+                            name="redirect_url" 
+                            type="url" 
+                            required
+                            x-model="redirectUrl"
+                            @blur="validateRedirectUrl"
+                            class="w-full px-3 py-2 rounded-lg border border-zinc-800 bg-zinc-900 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors" 
+                            placeholder="https://wa.me/1234567890"
+                        >
+                        <p x-show="errors.redirectUrl" x-text="errors.redirectUrl" class="text-sm text-red-500"></p>
+                        <p class="text-xs text-muted-foreground">WhatsApp link or website URL to redirect users</p>
+                    </div>
+                </div>
+                
+                <div class="card p-4 bg-green-500/10 border-green-500/20">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="font-medium text-green-300">Revenue Projection</p>
+                            <p class="text-sm text-green-200">If all QR codes are scanned</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-2xl font-bold text-green-400" x-text="'₹' + (qrCount * pricePerScan).toFixed(0)"></p>
+                            <p class="text-xs text-green-300">Total potential revenue</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- QR Upload Section -->
+            <div class="space-y-4 border-t border-zinc-800 pt-6">
+                <h2 class="text-lg font-semibold flex items-center">
+                    <i class="ph ph-upload mr-2 text-primary"></i>
+                    Upload QR Code Image
+                </h2>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- File Upload -->
+                    <div class="space-y-4">
+                        <div 
+                            class="border-2 border-dashed border-zinc-700 rounded-lg p-6 text-center hover:border-primary/50 transition-colors cursor-pointer"
+                            @click="$refs.fileInput.click()"
+                            @dragover.prevent
+                            @drop.prevent="handleFileDrop($event)"
+                            :class="{ 'border-primary bg-primary/5': isDragging }"
+                            @dragenter="isDragging = true"
+                            @dragleave="isDragging = false"
+                        >
+                            <div class="flex flex-col items-center space-y-3">
+                                <div class="p-3 rounded-full bg-zinc-800">
+                                    <i class="ph ph-upload text-xl text-zinc-400"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">Drop QR image here</p>
+                                    <p class="text-sm text-zinc-400">or click to browse files</p>
+                                </div>
+                                <p class="text-xs text-zinc-500">PNG, JPG up to 5MB</p>
+                            </div>
+                        </div>
+                        
+                        <input 
+                            type="file" 
+                            name="qr_image"
+                            x-ref="fileInput"
+                            @change="handleFileSelect($event)"
+                            accept="image/png,image/jpeg,image/jpg"
+                            class="hidden"
+                            required
+                        >
+                        
+                        <!-- Camera Scan Option -->
+                        <button 
+                            type="button"
+                            @click="toggleCamera"
+                            class="btn w-full"
+                            :class="cameraActive ? 'btn-secondary' : 'btn-ghost'"
+                        >
+                            <i :class="cameraActive ? 'ph ph-camera-slash' : 'ph ph-camera'" class="mr-2"></i>
+                            <span x-text="cameraActive ? 'Stop Camera' : 'Use Camera'"></span>
+                        </button>
+                        
+                        <div x-show="cameraActive" class="relative">
+                            <video 
+                                x-ref="video" 
+                                autoplay 
+                                playsinline 
+                                class="w-full h-48 object-cover rounded-lg bg-zinc-900"
+                            ></video>
+                            <canvas x-ref="canvas" class="hidden"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Preview & Info -->
+                    <div class="space-y-4">
+                        <div x-show="previewImage" class="text-center">
+                            <p class="text-sm text-zinc-400 mb-2">Image Preview</p>
+                            <img 
+                                x-ref="preview" 
+                                class="max-w-full h-auto rounded-lg border border-zinc-700 mx-auto"
+                                style="max-height: 200px;"
+                            >
+                        </div>
+                        
+                        <div x-show="scanResult" class="space-y-2">
+                            <p class="text-sm text-zinc-400">Detected QR Content:</p>
+                            <div class="p-3 rounded-lg bg-zinc-800 border border-zinc-700">
+                                <p class="font-mono text-xs break-all" x-text="scanResult"></p>
+                            </div>
+                        </div>
+                        
+                        <div x-show="error" class="p-3 rounded-lg bg-red-900/20 border border-red-800">
+                            <div class="flex items-center">
+                                <i class="ph ph-warning text-red-500 mr-2"></i>
+                                <p class="text-red-400 text-sm" x-text="error"></p>
+                            </div>
+                        </div>
+                        
+                        <div x-show="!selectedFile && !scanResult" class="text-center py-6">
+                            <div class="p-3 rounded-full bg-zinc-800 inline-flex mb-2">
+                                <i class="ph ph-qr-code text-xl text-zinc-600"></i>
+                            </div>
+                            <p class="text-zinc-400 text-sm">Upload QR image to complete packet setup</p>
                         </div>
                     </div>
                 </div>
@@ -82,12 +229,12 @@
         <!-- Actions -->
         <div class="flex items-center justify-between">
             <a href="{{ url_for('packets.list') }}" class="btn btn-ghost">
-                <i class="ph-x mr-2"></i>
+                <i class="ph ph-x mr-2"></i>
                 Cancel
             </a>
             <div class="flex items-center space-x-3">
                 <button type="button" class="btn btn-secondary">
-                    <i class="ph-floppy-disk mr-2"></i>
+                    <i class="ph ph-floppy-disk mr-2"></i>
                     Save Draft
                 </button>
                 <button 
@@ -96,11 +243,11 @@
                     class="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     <span x-show="!loading" class="flex items-center">
-                        <i class="ph-check mr-2"></i>
+                        <i class="ph ph-check mr-2"></i>
                         Create Packet
                     </span>
                     <span x-show="loading" class="flex items-center">
-                        <i class="ph-circle-notch animate-spin mr-2"></i>
+                        <i class="ph ph-circle-notch animate-spin mr-2"></i>
                         Creating...
                     </span>
                 </button>
@@ -113,13 +260,25 @@
 function createPacketForm() {
     return {
         qrCount: 25,
+        pricePerScan: 50,
+        redirectUrl: '',
         loading: false,
+        selectedFile: null,
+        previewImage: false,
+        cameraActive: false,
+        isDragging: false,
+        stream: null,
+        scanResult: '',
+        error: '',
         errors: {
-            qrCount: ''
+            qrCount: '',
+            pricePerScan: '',
+            redirectUrl: ''
         },
         
         get isValid() {
-            return this.qrCount && !this.errors.qrCount;
+            return this.qrCount && this.pricePerScan && this.redirectUrl && this.selectedFile && 
+                   !this.errors.qrCount && !this.errors.pricePerScan && !this.errors.redirectUrl;
         },
         
         validateQrCount() {
@@ -132,6 +291,165 @@ function createPacketForm() {
             } else {
                 this.errors.qrCount = '';
             }
+        },
+        
+        validatePricePerScan() {
+            if (!this.pricePerScan) {
+                this.errors.pricePerScan = 'Price per scan is required';
+            } else if (this.pricePerScan < 1) {
+                this.errors.pricePerScan = 'Price must be at least ₹1';
+            } else if (this.pricePerScan > 1000) {
+                this.errors.pricePerScan = 'Price cannot exceed ₹1000';
+            } else {
+                this.errors.pricePerScan = '';
+            }
+        },
+        
+        validateRedirectUrl() {
+            if (!this.redirectUrl) {
+                this.errors.redirectUrl = 'Redirect URL is required';
+            } else if (!this.isValidUrl(this.redirectUrl)) {
+                this.errors.redirectUrl = 'Please enter a valid URL';
+            } else {
+                this.errors.redirectUrl = '';
+            }
+        },
+        
+        isValidUrl(string) {
+            try {
+                new URL(string);
+                return true;
+            } catch (_) {
+                return false;
+            }
+        },
+        
+        async handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                this.selectedFile = file;
+                await this.processFile(file);
+            }
+        },
+        
+        async handleFileDrop(event) {
+            this.isDragging = false;
+            const file = event.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                this.selectedFile = file;
+                await this.processFile(file);
+            }
+        },
+        
+        async processFile(file) {
+            this.error = '';
+            this.scanResult = '';
+            
+            try {
+                // Show preview
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    this.$refs.preview.src = e.target.result;
+                    this.previewImage = true;
+                };
+                reader.readAsDataURL(file);
+                
+                // Try to scan QR code
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const img = new Image();
+                
+                img.onload = () => {
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
+                    
+                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    const code = jsQR(imageData.data, imageData.width, imageData.height);
+                    
+                    if (code) {
+                        this.scanResult = code.data;
+                    }
+                };
+                
+                img.src = URL.createObjectURL(file);
+            } catch (err) {
+                this.error = 'Error processing image: ' + err.message;
+            }
+        },
+        
+        async toggleCamera() {
+            if (this.cameraActive) {
+                this.stopCamera();
+            } else {
+                await this.startCamera();
+            }
+        },
+        
+        async startCamera() {
+            try {
+                this.stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'environment' } 
+                });
+                this.$refs.video.srcObject = this.stream;
+                this.cameraActive = true;
+                
+                // Start scanning loop
+                this.scanFromCamera();
+            } catch (err) {
+                this.error = 'Unable to access camera: ' + err.message;
+            }
+        },
+        
+        stopCamera() {
+            if (this.stream) {
+                this.stream.getTracks().forEach(track => track.stop());
+                this.stream = null;
+            }
+            this.cameraActive = false;
+        },
+        
+        scanFromCamera() {
+            if (!this.cameraActive) return;
+            
+            const video = this.$refs.video;
+            const canvas = this.$refs.canvas;
+            const ctx = canvas.getContext('2d');
+            
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height);
+                
+                if (code) {
+                    this.scanResult = code.data;
+                    
+                    // Capture image from camera
+                    canvas.toBlob((blob) => {
+                        const file = new File([blob], 'camera-capture.jpg', { type: 'image/jpeg' });
+                        this.selectedFile = file;
+                        this.showPreview(file);
+                    });
+                    
+                    this.stopCamera();
+                    return;
+                }
+            }
+            
+            // Continue scanning
+            requestAnimationFrame(() => this.scanFromCamera());
+        },
+        
+        showPreview(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                this.$refs.preview.src = e.target.result;
+                this.previewImage = true;
+            };
+            reader.readAsDataURL(file);
         }
     }
 }

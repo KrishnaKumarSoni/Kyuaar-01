@@ -8,159 +8,366 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Custom Tailwind Configuration -->
+    <!-- Tailwind config for shadcn/ui theming -->
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
+                container: {
+                    center: true,
+                    padding: '2rem',
+                    screens: {
+                        '2xl': '1400px',
+                    },
+                },
                 extend: {
                     colors: {
+                        border: 'hsl(var(--border))',
+                        input: 'hsl(var(--input))',
+                        ring: 'hsl(var(--ring))',
+                        background: 'hsl(var(--background))',
+                        foreground: 'hsl(var(--foreground))',
                         primary: {
-                            DEFAULT: '#CC5500',
-                            hover: '#FF6600',
-                            light: '#FF8833'
+                            DEFAULT: 'hsl(var(--primary))',
+                            foreground: 'hsl(var(--primary-foreground))',
                         },
-                        burnt: {
-                            50: '#FFF5F0',
-                            100: '#FFE6D9',
-                            200: '#FFD3BD',
-                            300: '#FFBA94',
-                            400: '#FF9966',
-                            500: '#FF6600',
-                            600: '#CC5500',
-                            700: '#994000',
-                            800: '#662B00',
-                            900: '#331500'
-                        }
-                    }
-                }
-            }
+                        secondary: {
+                            DEFAULT: 'hsl(var(--secondary))',
+                            foreground: 'hsl(var(--secondary-foreground))',
+                        },
+                        destructive: {
+                            DEFAULT: 'hsl(var(--destructive))',
+                            foreground: 'hsl(var(--destructive-foreground))',
+                        },
+                        muted: {
+                            DEFAULT: 'hsl(var(--muted))',
+                            foreground: 'hsl(var(--muted-foreground))',
+                        },
+                        accent: {
+                            DEFAULT: 'hsl(var(--accent))',
+                            foreground: 'hsl(var(--accent-foreground))',
+                        },
+                        popover: {
+                            DEFAULT: 'hsl(var(--popover))',
+                            foreground: 'hsl(var(--popover-foreground))',
+                        },
+                        card: {
+                            DEFAULT: 'hsl(var(--card))',
+                            foreground: 'hsl(var(--card-foreground))',
+                        },
+                    },
+                    borderRadius: {
+                        lg: 'var(--radius)',
+                        md: 'calc(var(--radius) - 2px)',
+                        sm: 'calc(var(--radius) - 4px)',
+                    },
+                },
+            },
         }
     </script>
     
     <!-- Phosphor Icons -->
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/regular/style.css">
     
     <!-- Alpine.js for interactivity -->
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     
-    <!-- Custom CSS -->
+    <!-- Dark mode with burnt orange theme -->
     <style>
-        :root {
-            --primary: #CC5500;
-            --primary-hover: #FF6600;
-            --accent: #FF8833;
+        /* Force dark mode always */
+        * {
+            box-sizing: border-box;
         }
         
-        .dark {
-            color-scheme: dark;
+        body {
+            background-color: #09090b !important; /* zinc-950 */
+            color: #fafafa !important; /* zinc-50 */
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         }
         
-        /* Shadcn-like component styles */
+        /* Primary burnt orange colors */
+        .text-primary { color: #CC5500 !important; }
+        .bg-primary { background-color: #CC5500 !important; }
+        .border-primary { border-color: #CC5500 !important; }
+        
+        /* Buttons - Base styles */
         .btn {
-            @apply inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            font-size: 0.875rem;
+            line-height: 1.25rem;
+            transition: all 0.2s;
+            cursor: pointer;
+            border: 1px solid transparent;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            min-height: 2.5rem;
         }
         
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* Primary Button */
         .btn-primary {
-            @apply bg-primary hover:bg-primary-hover text-white focus-visible:ring-primary;
+            background-color: #CC5500 !important;
+            color: white !important;
+            border-color: #CC5500 !important;
         }
         
+        .btn-primary:hover:not(:disabled) {
+            background-color: #FF6600 !important;
+            border-color: #FF6600 !important;
+            color: white !important;
+        }
+        
+        /* Secondary Button */
         .btn-secondary {
-            @apply bg-zinc-800 hover:bg-zinc-700 text-zinc-100 focus-visible:ring-zinc-600;
+            background-color: #27272a !important; /* zinc-800 */
+            color: #fafafa !important;
+            border-color: #3f3f46 !important; /* zinc-700 */
         }
         
+        .btn-secondary:hover:not(:disabled) {
+            background-color: #3f3f46 !important; /* zinc-700 */
+            color: #fafafa !important;
+        }
+        
+        /* Ghost Button */
         .btn-ghost {
-            @apply hover:bg-zinc-800 hover:text-zinc-100;
+            background-color: transparent !important;
+            color: #fafafa !important;
+            border-color: transparent !important;
         }
         
-        .card {
-            @apply rounded-lg border border-zinc-800 bg-zinc-900/50 backdrop-blur;
+        .btn-ghost:hover:not(:disabled) {
+            background-color: #27272a !important; /* zinc-800 */
+            color: #fafafa !important;
         }
         
-        .input {
-            @apply flex h-10 w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm ring-offset-zinc-950 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+        /* Button variants */
+        .btn.w-full {
+            width: 100%;
         }
         
-        .label {
-            @apply text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70;
+        .btn.justify-start {
+            justify-content: flex-start;
+        }
+        
+        /* Outline Button */
+        .btn-outline {
+            background-color: transparent !important;
+            color: #fafafa !important;
+            border-color: #3f3f46 !important; /* zinc-700 */
+        }
+        
+        .btn-outline:hover:not(:disabled) {
+            background-color: #fafafa !important;
+            color: #09090b !important; /* zinc-950 */
+        }
+        
+        /* Navigation */
+        nav {
+            background-color: #18181b !important; /* zinc-900 */
+            border-bottom: 1px solid #27272a !important; /* zinc-800 */
+        }
+        
+        /* Cards */
+        .card, .rounded-lg.border {
+            background-color: #18181b !important; /* zinc-900 */
+            border: 1px solid #27272a !important; /* zinc-800 */
+            color: #fafafa !important;
+        }
+        
+        /* Inputs */
+        input, textarea, select {
+            background-color: #18181b !important; /* zinc-900 */
+            border: 1px solid #27272a !important; /* zinc-800 */
+            color: #fafafa !important;
+        }
+        
+        input:focus, textarea:focus, select:focus {
+            outline: none !important;
+            border-color: #CC5500 !important;
+            box-shadow: 0 0 0 2px rgba(204, 85, 0, 0.2) !important;
+        }
+        
+        input::placeholder, textarea::placeholder {
+            color: #71717a !important; /* zinc-500 */
+        }
+        
+        /* Labels */
+        label {
+            color: #fafafa !important;
+            font-weight: 500;
+        }
+        
+        /* Links */
+        a {
+            color: #fafafa !important;
+            text-decoration: none;
+        }
+        
+        a:hover {
+            color: #CC5500 !important;
+        }
+        
+        /* Footer */
+        footer {
+            background-color: #18181b !important; /* zinc-900 */
+            border-top: 1px solid #27272a !important; /* zinc-800 */
+            color: #71717a !important; /* zinc-500 */
+        }
+        
+        /* Text colors */
+        .text-muted-foreground {
+            color: #71717a !important; /* zinc-500 */
+        }
+        
+        .text-foreground {
+            color: #fafafa !important; /* zinc-50 */
+        }
+        
+        /* Alerts */
+        .text-destructive {
+            color: #ef4444 !important; /* red-500 */
+        }
+        
+        /* Checkboxes */
+        input[type="checkbox"] {
+            accent-color: #CC5500 !important;
+        }
+        
+        /* Dropdowns */
+        .absolute.right-0 {
+            background-color: #18181b !important; /* zinc-900 */
+            border: 1px solid #27272a !important; /* zinc-800 */
+        }
+        
+        .absolute.right-0 a:hover {
+            background-color: #27272a !important; /* zinc-800 */
+        }
+        
+        /* Phosphor Icons - Ensure they display properly */
+        i[class*="ph"], i[class*="ph-"] {
+            font-family: "Phosphor" !important;
+            font-style: normal;
+            font-weight: normal;
+            line-height: 1;
+            display: inline-block;
+        }
+        
+        /* Stats cards improvements */
+        .stats-icon {
+            width: 3rem;
+            height: 3rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Better hover states */
+        .card:hover {
+            border-color: #3f3f46 !important; /* zinc-700 */
+            transform: translateY(-1px);
+            transition: all 0.2s ease;
+        }
+        
+        /* Improve spacing in flex containers */
+        .space-x-3 > * + * {
+            margin-left: 0.75rem;
+        }
+        
+        .space-y-3 > * + * {
+            margin-top: 0.75rem;
+        }
+        
+        .space-y-4 > * + * {
+            margin-top: 1rem;
         }
     </style>
     
     {% block extra_head %}{% endblock %}
 </head>
-<body class="bg-zinc-950 text-zinc-50 min-h-screen">
+<body class="min-h-screen">
     <!-- Navigation -->
-    <nav class="border-b border-zinc-800 bg-zinc-900/50 backdrop-blur sticky top-0 z-50" x-data="{ mobileMenu: false }">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex items-center">
-                    <a href="{{ url_for('dashboard.index') if current_user.is_authenticated else url_for('auth.login') }}" class="flex items-center space-x-2">
-                        <i class="ph-package text-2xl text-primary"></i>
-                        <span class="font-bold text-xl">Kyuaar</span>
+    <nav class="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60" x-data="{ mobileMenu: false }">
+        <div class="container flex h-14 items-center">
+            <div class="mr-4 hidden md:flex">
+                <a href="{{ url_for('dashboard.index') if current_user.is_authenticated else url_for('auth.login') }}" class="mr-6 flex items-center space-x-2">
+                    <i class="ph ph-package text-2xl text-primary"></i>
+                    <span class="font-bold text-xl">Kyuaar</span>
+                </a>
+                
+                {% if current_user.is_authenticated %}
+                <nav class="flex items-center space-x-6 text-sm font-medium">
+                    <a href="{{ url_for('dashboard.index') }}" class="flex items-center transition-colors hover:text-primary text-foreground/80">
+                        <i class="ph ph-house mr-2"></i>Dashboard
                     </a>
-                    
-                    {% if current_user.is_authenticated %}
-                    <div class="hidden md:block ml-10">
-                        <div class="flex items-baseline space-x-4">
-                            <a href="{{ url_for('dashboard.index') }}" class="btn btn-ghost px-3 py-2">
-                                <i class="ph-house mr-2"></i> Dashboard
-                            </a>
-                            <a href="{{ url_for('packets.list') }}" class="btn btn-ghost px-3 py-2">
-                                <i class="ph-package mr-2"></i> Packets
-                            </a>
-                            <a href="{{ url_for('config.settings') }}" class="btn btn-ghost px-3 py-2">
-                                <i class="ph-gear mr-2"></i> Settings
-                            </a>
-                        </div>
-                    </div>
-                    {% endif %}
+                    <a href="{{ url_for('packets.list') }}" class="flex items-center transition-colors hover:text-primary text-foreground/80">
+                        <i class="ph ph-package mr-2"></i>Packets
+                    </a>
+                    <a href="{{ url_for('config.settings') }}" class="flex items-center transition-colors hover:text-primary text-foreground/80">
+                        <i class="ph ph-gear mr-2"></i>Settings
+                    </a>
+                </nav>
+                {% endif %}
+            </div>
+            
+            <!-- Mobile menu button -->
+            <button @click="mobileMenu = !mobileMenu" class="mr-2 px-0 text-base hover:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 md:hidden">
+                <i class="ph ph-list text-xl"></i>
+                <span class="sr-only">Toggle Menu</span>
+            </button>
+            
+            <!-- Mobile Logo -->
+            <div class="flex flex-1 items-center justify-between space-x-2 md:justify-end">
+                <div class="w-full flex-1 md:w-auto md:flex-none">
+                    <a href="{{ url_for('dashboard.index') if current_user.is_authenticated else url_for('auth.login') }}" class="flex items-center space-x-2 md:hidden">
+                        <i class="ph ph-package text-2xl text-primary"></i>
+                        <span class="font-bold">Kyuaar</span>
+                    </a>
                 </div>
                 
-                <div class="flex items-center space-x-4">
-                    <!-- Dark mode toggle -->
-                    <button onclick="toggleTheme()" class="btn btn-ghost p-2">
-                        <i class="ph-sun text-xl dark:hidden"></i>
-                        <i class="ph-moon text-xl hidden dark:block"></i>
-                    </button>
-                    
+                <nav class="flex items-center space-x-2">
                     {% if current_user.is_authenticated %}
                     <!-- User menu -->
                     <div class="relative" x-data="{ open: false }">
-                        <button @click="open = !open" class="btn btn-ghost px-3 py-2">
-                            <i class="ph-user-circle mr-2"></i>
+                        <button @click="open = !open" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background hover:bg-accent hover:text-accent-foreground h-10 py-2 px-4">
+                            <i class="ph ph-user-circle mr-2"></i>
                             {{ current_user.email }}
-                            <i class="ph-caret-down ml-2"></i>
+                            <i class="ph ph-caret-down ml-2"></i>
                         </button>
                         
                         <div x-show="open" @click.away="open = false" x-transition 
-                             class="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-zinc-900 border border-zinc-800">
-                            <a href="{{ url_for('auth.logout') }}" class="block px-4 py-2 text-sm hover:bg-zinc-800">
-                                <i class="ph-sign-out mr-2"></i> Logout
+                             class="absolute right-0 z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md">
+                            <a href="{{ url_for('auth.logout') }}" class="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground">
+                                <i class="ph ph-sign-out mr-2"></i>Logout
                             </a>
                         </div>
                     </div>
-                    
-                    <!-- Mobile menu button -->
-                    <button @click="mobileMenu = !mobileMenu" class="md:hidden btn btn-ghost p-2">
-                        <i class="ph-list text-xl"></i>
-                    </button>
                     {% endif %}
-                </div>
+                </nav>
             </div>
         </div>
         
         <!-- Mobile menu -->
         {% if current_user.is_authenticated %}
-        <div x-show="mobileMenu" x-transition class="md:hidden border-t border-zinc-800">
-            <div class="px-2 pt-2 pb-3 space-y-1">
-                <a href="{{ url_for('dashboard.index') }}" class="btn btn-ghost w-full justify-start px-3 py-2">
-                    <i class="ph-house mr-2"></i> Dashboard
+        <div x-show="mobileMenu" x-transition class="border-t md:hidden">
+            <div class="grid gap-3 p-6">
+                <a href="{{ url_for('dashboard.index') }}" class="flex items-center text-sm font-medium p-2 rounded-lg hover:bg-zinc-800 transition-colors">
+                    <i class="ph ph-house mr-3 text-primary"></i>Dashboard
                 </a>
-                <a href="{{ url_for('packets.list') }}" class="btn btn-ghost w-full justify-start px-3 py-2">
-                    <i class="ph-package mr-2"></i> Packets
+                <a href="{{ url_for('packets.list') }}" class="flex items-center text-sm font-medium p-2 rounded-lg hover:bg-zinc-800 transition-colors">
+                    <i class="ph ph-package mr-3 text-primary"></i>Packets
                 </a>
-                <a href="{{ url_for('config.settings') }}" class="btn btn-ghost w-full justify-start px-3 py-2">
-                    <i class="ph-gear mr-2"></i> Settings
+                <a href="{{ url_for('config.settings') }}" class="flex items-center text-sm font-medium p-2 rounded-lg hover:bg-zinc-800 transition-colors">
+                    <i class="ph ph-gear mr-3 text-primary"></i>Settings
                 </a>
             </div>
         </div>
@@ -170,22 +377,22 @@
     <!-- Flash messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+            <div class="container mt-4">
                 {% for category, message in messages %}
-                    <div class="card p-4 mb-4 {% if category == 'error' %}border-red-800 bg-red-900/20{% elif category == 'success' %}border-green-800 bg-green-900/20{% else %}border-blue-800 bg-blue-900/20{% endif %}" x-data="{ show: true }" x-show="show">
+                    <div class="relative w-full rounded-lg border p-4 mb-4 {% if category == 'error' %}border-destructive/50 text-destructive{% elif category == 'success' %}border-green-500/50 text-green-500{% else %}border-blue-500/50 text-blue-500{% endif %}" x-data="{ show: true }" x-show="show">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center">
                                 {% if category == 'error' %}
-                                    <i class="ph-warning-circle text-red-500 mr-2"></i>
+                                    <i class="ph ph-warning-circle mr-2"></i>
                                 {% elif category == 'success' %}
-                                    <i class="ph-check-circle text-green-500 mr-2"></i>
+                                    <i class="ph ph-check-circle mr-2"></i>
                                 {% else %}
-                                    <i class="ph-info text-blue-500 mr-2"></i>
+                                    <i class="ph ph-info mr-2"></i>
                                 {% endif %}
-                                <span>{{ message }}</span>
+                                <div class="text-sm font-medium">{{ message }}</div>
                             </div>
-                            <button @click="show = false" class="btn btn-ghost p-1">
-                                <i class="ph-x"></i>
+                            <button @click="show = false" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground h-8 w-8 p-0">
+                                <i class="ph ph-x h-4 w-4"></i>
                             </button>
                         </div>
                     </div>
@@ -200,38 +407,39 @@
     </main>
     
     <!-- Footer -->
-    <footer class="border-t border-zinc-800 bg-zinc-900/50 backdrop-blur mt-auto">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <div class="text-center text-sm text-zinc-400">
+    <footer class="border-t bg-background mt-auto">
+        <div class="container py-6">
+            <div class="text-center text-sm text-muted-foreground">
                 <p>&copy; 2024 Kyuaar. All rights reserved.</p>
             </div>
         </div>
     </footer>
     
-    <!-- Theme toggle script -->
+    
+    <!-- Phosphor Icons Initialization Script -->
     <script>
-        function toggleTheme() {
-            const html = document.documentElement;
-            const currentTheme = html.classList.contains('dark') ? 'dark' : 'light';
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            
-            if (newTheme === 'dark') {
-                html.classList.add('dark');
-            } else {
-                html.classList.remove('dark');
-            }
-            
-            localStorage.setItem('theme', newTheme);
-        }
-        
-        // Initialize theme from localStorage
+        // Ensure Phosphor icons are properly loaded
         document.addEventListener('DOMContentLoaded', function() {
-            const savedTheme = localStorage.getItem('theme') || 'dark';
-            if (savedTheme === 'dark') {
-                document.documentElement.classList.add('dark');
-            } else {
-                document.documentElement.classList.remove('dark');
+            // Check if Phosphor is loaded, if not, try to load it again
+            if (typeof window.Phosphor === 'undefined') {
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2';
+                script.onload = function() {
+                    console.log('Phosphor icons loaded successfully');
+                };
+                script.onerror = function() {
+                    console.warn('Failed to load Phosphor icons');
+                };
+                document.head.appendChild(script);
             }
+            
+            // Add a small delay to ensure icons are rendered
+            setTimeout(function() {
+                const icons = document.querySelectorAll('i[class*="ph"]');
+                if (icons.length > 0) {
+                    console.log(`Found ${icons.length} Phosphor icons on page`);
+                }
+            }, 100);
         });
     </script>
     

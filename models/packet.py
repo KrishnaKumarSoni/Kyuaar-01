@@ -113,8 +113,8 @@ class Packet:
         self.config_state = 'done'
         return self.transition_to(PacketStates.CONFIG_DONE)
     
-    def calculate_price(self, price_per_qr: float = 0.40) -> float:
-        """Calculate packet price based on QR count"""
+    def calculate_price(self, price_per_qr: float = 33.0) -> float:
+        """Calculate packet price based on QR count (in INR)"""
         return self.qr_count * price_per_qr
     
     def is_ready_for_sale(self) -> bool:
@@ -234,7 +234,7 @@ class Packet:
         try:
             # Calculate default price if not provided
             if price is None:
-                price = qr_count * 0.40  # Default $0.40 per QR
+                price = qr_count * 33.0  # Default ₹33 per QR
             
             packet = cls(
                 user_id=user_id,

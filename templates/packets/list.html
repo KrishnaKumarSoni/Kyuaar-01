@@ -11,12 +11,8 @@
             <p class="text-zinc-400">Manage your QR code packets and redirects</p>
         </div>
         <div class="flex items-center space-x-3">
-            <a href="{{ url_for('packets.upload') }}" class="btn btn-secondary">
-                <i class="ph-upload mr-2"></i>
-                Upload QR
-            </a>
             <a href="{{ url_for('packets.create') }}" class="btn btn-primary">
-                <i class="ph-plus mr-2"></i>
+                <i class="ph ph-plus mr-2"></i>
                 Create Packet
             </a>
         </div>
@@ -24,29 +20,29 @@
     
     <!-- Packets List -->
     {% if packets %}
-        <div class="card">
+        <div class="card p-0">
             <div class="overflow-x-auto">
                 <table class="w-full">
                     <thead class="border-b border-zinc-800">
                         <tr class="text-left">
-                            <th class="p-4 font-medium">Name</th>
-                            <th class="p-4 font-medium">Status</th>
-                            <th class="p-4 font-medium">Scans</th>
-                            <th class="p-4 font-medium">Created</th>
-                            <th class="p-4 font-medium">Actions</th>
+                            <th class="p-4 font-medium text-foreground">Packet</th>
+                            <th class="p-4 font-medium text-foreground">Status</th>
+                            <th class="p-4 font-medium text-foreground">Pricing</th>
+                            <th class="p-4 font-medium text-foreground">Created</th>
+                            <th class="p-4 font-medium text-foreground">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for packet in packets %}
-                        <tr class="border-b border-zinc-800 hover:bg-zinc-900/50">
+                        <tr class="border-b border-zinc-800 hover:bg-zinc-800/30 transition-colors">
                             <td class="p-4">
                                 <div class="flex items-center space-x-3">
                                     <div class="p-2 rounded-lg bg-zinc-800">
-                                        <i class="ph-package text-primary"></i>
+                                        <i class="ph ph-package text-primary text-lg"></i>
                                     </div>
                                     <div>
-                                        <p class="font-medium">{{ packet.id }}</p>
-                                        <p class="text-sm text-zinc-400">{{ packet.qr_count }} QR codes</p>
+                                        <p class="font-medium text-foreground">{{ packet.id }}</p>
+                                        <p class="text-sm text-muted-foreground">{{ packet.qr_count }} QR codes</p>
                                     </div>
                                 </div>
                             </td>
@@ -61,28 +57,26 @@
                                 </span>
                             </td>
                             <td class="p-4">
-                                <span class="font-medium">-</span>
-                                <p class="text-xs text-zinc-400">Coming soon</p>
+                                <div class="text-sm">
+                                    <p class="font-medium text-foreground">₹{{ packet.price|int if packet.price else 0 }}</p>
+                                    <p class="text-xs text-zinc-400">{{ packet.qr_count }} QR codes</p>
+                                </div>
                             </td>
                             <td class="p-4">
-                                <span class="text-zinc-400">{{ packet.created_at.strftime('%b %d, %Y') if packet.created_at else 'Unknown' }}</span>
+                                <span class="text-muted-foreground">{{ packet.created_at.strftime('%b %d, %Y') if packet.created_at else 'Unknown' }}</span>
                             </td>
                             <td class="p-4">
                                 <div class="flex items-center space-x-2">
                                     <a href="{{ url_for('packets.view', packet_id=packet.id) }}" class="btn btn-ghost p-2" title="View">
-                                        <i class="ph-eye"></i>
+                                        <i class="ph ph-eye text-lg"></i>
                                     </a>
-                                    {% if packet.state == 'setup_pending' %}
-                                    <a href="{{ url_for('packets.upload') }}?packet_id={{ packet.id }}" class="btn btn-ghost p-2 text-primary" title="Upload QR">
-                                        <i class="ph-upload"></i>
-                                    </a>
-                                    {% elif packet.state == 'setup_done' %}
+                                    {% if packet.state == 'setup_done' %}
                                     <button class="btn btn-ghost p-2 text-green-400" title="Mark as Sold" onclick="markAsSold('{{ packet.id }}')">
-                                        <i class="ph-currency-dollar"></i>
+                                        <i class="ph ph-currency-dollar text-lg"></i>
                                     </button>
                                     {% endif %}
                                     <button class="btn btn-ghost p-2 text-red-400 hover:text-red-300" title="Delete" onclick="deletePacket('{{ packet.id }}')">
-                                        <i class="ph-trash"></i>
+                                        <i class="ph ph-trash text-lg"></i>
                                     </button>
                                 </div>
                             </td>
@@ -97,19 +91,15 @@
         <div class="card p-12 text-center">
             <div class="flex justify-center mb-4">
                 <div class="p-4 rounded-full bg-zinc-800">
-                    <i class="ph-package text-4xl text-zinc-600"></i>
+                    <i class="ph ph-package text-4xl text-zinc-600"></i>
                 </div>
             </div>
             <h3 class="text-xl font-semibold mb-2">No packets yet</h3>
             <p class="text-zinc-400 mb-6">Create your first packet to get started with QR code management</p>
             <div class="flex items-center justify-center space-x-3">
                 <a href="{{ url_for('packets.create') }}" class="btn btn-primary">
-                    <i class="ph-plus mr-2"></i>
+                    <i class="ph ph-plus mr-2"></i>
                     Create Packet
-                </a>
-                <a href="{{ url_for('packets.upload') }}" class="btn btn-secondary">
-                    <i class="ph-upload mr-2"></i>
-                    Upload QR Code
                 </a>
             </div>
         </div>

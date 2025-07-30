@@ -17,12 +17,12 @@
     <!-- Stats Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <!-- Total Packets -->
-        <div class="card p-6">
+        <div class="card p-6 hover:shadow-lg transition-all duration-200">
             <div class="flex items-center">
-                <div class="p-3 rounded-full bg-primary/10 border border-primary/20">
-                    <i class="ph-package text-2xl text-primary"></i>
+                <div class="stats-icon rounded-full bg-primary/10 border border-primary/20">
+                    <i class="ph ph-package text-2xl text-primary"></i>
                 </div>
-                <div class="ml-4">
+                <div class="ml-4 flex-1">
                     <p class="text-sm font-medium text-zinc-400">Total Packets</p>
                     <p class="text-2xl font-bold">{{ stats.total_packets or 0 }}</p>
                 </div>
@@ -30,12 +30,12 @@
         </div>
         
         <!-- Active Packets -->
-        <div class="card p-6">
+        <div class="card p-6 hover:shadow-lg transition-all duration-200">
             <div class="flex items-center">
-                <div class="p-3 rounded-full bg-green-500/10 border border-green-500/20">
-                    <i class="ph-check-circle text-2xl text-green-500"></i>
+                <div class="stats-icon rounded-full bg-green-500/10 border border-green-500/20">
+                    <i class="ph ph-check-circle text-2xl text-green-500"></i>
                 </div>
-                <div class="ml-4">
+                <div class="ml-4 flex-1">
                     <p class="text-sm font-medium text-zinc-400">Active Packets</p>
                     <p class="text-2xl font-bold">{{ stats.active_packets or 0 }}</p>
                 </div>
@@ -43,12 +43,12 @@
         </div>
         
         <!-- Total Scans -->
-        <div class="card p-6">
+        <div class="card p-6 hover:shadow-lg transition-all duration-200">
             <div class="flex items-center">
-                <div class="p-3 rounded-full bg-blue-500/10 border border-blue-500/20">
-                    <i class="ph-qr-code text-2xl text-blue-500"></i>
+                <div class="stats-icon rounded-full bg-blue-500/10 border border-blue-500/20">
+                    <i class="ph ph-qr-code text-2xl text-blue-500"></i>
                 </div>
-                <div class="ml-4">
+                <div class="ml-4 flex-1">
                     <p class="text-sm font-medium text-zinc-400">Total Scans</p>
                     <p class="text-2xl font-bold">{{ stats.total_scans or 0 }}</p>
                 </div>
@@ -56,12 +56,12 @@
         </div>
         
         <!-- This Month -->
-        <div class="card p-6">
+        <div class="card p-6 hover:shadow-lg transition-all duration-200">
             <div class="flex items-center">
-                <div class="p-3 rounded-full bg-purple-500/10 border border-purple-500/20">
-                    <i class="ph-trend-up text-2xl text-purple-500"></i>
+                <div class="stats-icon rounded-full bg-purple-500/10 border border-purple-500/20">
+                    <i class="ph ph-trend-up text-2xl text-purple-500"></i>
                 </div>
-                <div class="ml-4">
+                <div class="ml-4 flex-1">
                     <p class="text-sm font-medium text-zinc-400">This Month</p>
                     <p class="text-2xl font-bold">{{ stats.monthly_scans or 0 }}</p>
                 </div>
@@ -76,9 +76,13 @@
             <div class="card">
                 <div class="p-6 border-b border-zinc-800">
                     <div class="flex items-center justify-between">
-                        <h2 class="text-xl font-semibold">Recent Packets</h2>
+                        <h2 class="text-xl font-semibold flex items-center">
+                            <i class="ph ph-clock-counter-clockwise mr-2 text-primary"></i>
+                            Recent Packets
+                        </h2>
                         <a href="{{ url_for('packets.list') }}" class="btn btn-ghost text-sm">
-                            View all <i class="ph-arrow-right ml-1"></i>
+                            <i class="ph ph-arrow-right mr-1"></i>
+                            View all
                         </a>
                     </div>
                 </div>
@@ -90,7 +94,7 @@
                             <div class="flex items-center justify-between p-3 rounded-lg border border-zinc-800 hover:border-zinc-700 transition-colors">
                                 <div class="flex items-center space-x-3">
                                     <div class="p-2 rounded-lg bg-zinc-800">
-                                        <i class="ph-package text-primary"></i>
+                                        <i class="ph ph-package text-primary"></i>
                                     </div>
                                     <div>
                                         <p class="font-medium">{{ packet.id }}</p>
@@ -106,8 +110,9 @@
                                         {% else %}bg-zinc-500/20 text-zinc-400{% endif %}">
                                         {{ packet.state.replace('_', ' ').title() }}
                                     </span>
-                                    <a href="{{ url_for('packets.view', packet_id=packet.id) }}" class="btn btn-ghost p-1">
-                                        <i class="ph-arrow-right"></i>
+                                    <a href="{{ url_for('packets.view', packet_id=packet.id) }}" class="btn btn-ghost text-sm p-2">
+                                        <i class="ph ph-eye mr-1"></i>
+                                        View
                                     </a>
                                 </div>
                             </div>
@@ -115,10 +120,10 @@
                         </div>
                     {% else %}
                         <div class="text-center py-8">
-                            <i class="ph-package text-4xl text-zinc-600 mb-4"></i>
+                            <i class="ph ph-package text-4xl text-zinc-600 mb-4"></i>
                             <p class="text-zinc-400 mb-4">No packets yet</p>
                             <a href="{{ url_for('packets.create') }}" class="btn btn-primary">
-                                <i class="ph-plus mr-2"></i>
+                                <i class="ph ph-plus mr-2"></i>
                                 Create your first packet
                             </a>
                         </div>
@@ -129,20 +134,23 @@
         
         <!-- Quick Actions -->
         <div class="space-y-6">
-            <!-- Create Packet -->
+            <!-- Quick Actions -->
             <div class="card p-6">
-                <h3 class="text-lg font-semibold mb-4">Quick Actions</h3>
+                <h3 class="text-lg font-semibold mb-4 flex items-center">
+                    <i class="ph ph-lightning mr-2 text-primary"></i>
+                    Quick Actions
+                </h3>
                 <div class="space-y-3">
                     <a href="{{ url_for('packets.create') }}" class="btn btn-primary w-full justify-start">
-                        <i class="ph-plus mr-2"></i>
+                        <i class="ph ph-plus mr-2"></i>
                         Create New Packet
                     </a>
                     <a href="{{ url_for('packets.upload') }}" class="btn btn-secondary w-full justify-start">
-                        <i class="ph-upload mr-2"></i>
+                        <i class="ph ph-upload mr-2"></i>
                         Upload QR Code
                     </a>
-                    <a href="{{ url_for('config.settings') }}" class="btn btn-ghost w-full justify-start">
-                        <i class="ph-gear mr-2"></i>
+                    <a href="{{ url_for('config.settings') }}" class="btn btn-outline w-full justify-start">
+                        <i class="ph ph-gear mr-2"></i>
                         Settings
                     </a>
                 </div>
@@ -150,7 +158,10 @@
             
             <!-- Recent Activity -->
             <div class="card p-6">
-                <h3 class="text-lg font-semibold mb-4">Recent Activity</h3>
+                <h3 class="text-lg font-semibold mb-4 flex items-center">
+                    <i class="ph ph-activity mr-2 text-primary"></i>
+                    Recent Activity
+                </h3>
                 <div class="space-y-3">
                     {% if recent_activity %}
                         {% for activity in recent_activity %}
