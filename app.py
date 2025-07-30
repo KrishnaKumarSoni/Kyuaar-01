@@ -84,12 +84,14 @@ from routes.dashboard import dashboard_bp
 from routes.packets import packets_bp
 from routes.config import config_bp
 from routes.api import api_bp
+from routes.qr import qr_bp
 
 # Register blueprints with web UI routes
 app.register_blueprint(auth_bp, url_prefix='/auth')
-app.register_blueprint(dashboard_bp, url_prefix='/')
+app.register_blueprint(dashboard_bp, url_prefix='/app')
 app.register_blueprint(packets_bp, url_prefix='/packets')
 app.register_blueprint(config_bp, url_prefix='/config')
+app.register_blueprint(qr_bp, url_prefix='/qr')
 
 # Register API blueprint
 app.register_blueprint(api_bp, url_prefix='/api')
@@ -168,21 +170,15 @@ def handle_packet_redirect(packet_id):
                              error_message="System error",
                              error_details="An error occurred processing your request."), 500
 
-# Customer-facing landing page
+# Customer-facing landing page and authenticated user redirect
 @app.route('/')
 def landing():
-    """Public landing page for potential customers"""
-    return render_template('landing.html')
-
-# Redirect authenticated users to dashboard
-@app.route('/app')
-def app_redirect():
-    """Redirect authenticated users to dashboard or login"""
+    """Public landing page for potential customers, redirect authenticated users to dashboard"""
     from flask_login import current_user
     if current_user.is_authenticated:
         return redirect(url_for('dashboard.index'))
     else:
-        return redirect(url_for('auth.login'))
+        return render_template('landing.html')
 
 # Health check endpoint
 @app.route('/health')

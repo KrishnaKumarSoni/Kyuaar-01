@@ -17,6 +17,11 @@ from qrcode.image.styles.colormasks import (
     RadialGradiantColorMask,
     SquareGradiantColorMask
 )
+from qrcode.image.styles.eyedrawers import (
+    SquareEyeDrawer,
+    CircleEyeDrawer,
+    RoundedEyeDrawer
+)
 from PIL import Image, ImageDraw
 import io
 import base64
@@ -32,13 +37,20 @@ logger = logging.getLogger(__name__)
 class QRStyleOptions:
     """Available QR code styling options"""
     
-    # Module drawer types
+    # Module drawer types (data dots)
     MODULE_DRAWERS = {
         'square': SquareModuleDrawer(),
         'circle': CircleModuleDrawer(),
         'rounded': RoundedModuleDrawer(),
         'vertical_bars': VerticalBarsDrawer(),
         'horizontal_bars': HorizontalBarsDrawer()
+    }
+    
+    # Eye drawer types (corner patterns)
+    EYE_DRAWERS = {
+        'square': SquareEyeDrawer(),
+        'circle': CircleEyeDrawer(),
+        'rounded': RoundedEyeDrawer()
     }
     
     # Color mask types
@@ -151,10 +163,16 @@ class QRGenerator:
         
         logger.info(f"Creating styled image with settings: {settings}")
         
-        # Get module drawer
+        # Get module drawer (data dots)
         module_drawer = self.style_options.MODULE_DRAWERS.get(
             settings['module_drawer'], 
             self.style_options.MODULE_DRAWERS['square']
+        )
+        
+        # Get eye drawer (corner patterns)
+        eye_drawer = self.style_options.EYE_DRAWERS.get(
+            settings.get('eye_drawer', 'square'),
+            self.style_options.EYE_DRAWERS['square']
         )
         
         # Create color mask
@@ -201,6 +219,7 @@ class QRGenerator:
         img = qr.make_image(
             image_factory=StyledPilImage,
             module_drawer=module_drawer,
+            eye_drawer=eye_drawer,
             color_mask=color_mask
         )
         
@@ -294,36 +313,42 @@ class QRGenerator:
         return {
             'default': {
                 'module_drawer': 'square',
+                'eye_drawer': 'square',
                 'fill_color': '#000000',
                 'back_color': '#FFFFFF',
                 'color_mask': 'solid'
             },
             'rounded': {
                 'module_drawer': 'rounded',
+                'eye_drawer': 'rounded',
                 'fill_color': '#CC5500',
                 'back_color': '#FFFFFF',
                 'color_mask': 'solid'
             },
             'circular': {
                 'module_drawer': 'circle',
+                'eye_drawer': 'circle',
                 'fill_color': '#000000',
                 'back_color': '#FFFFFF',
                 'color_mask': 'solid'
             },
             'gradient_radial': {
                 'module_drawer': 'square',
+                'eye_drawer': 'square',
                 'color_mask': 'radial_gradient',
                 'gradient_colors': ['#CC5500', '#FF6600'],
                 'back_color': '#FFFFFF'
             },
             'gradient_square': {
                 'module_drawer': 'rounded',
+                'eye_drawer': 'rounded',
                 'color_mask': 'square_gradient',
                 'gradient_colors': ['#CC5500', '#000000'],
                 'back_color': '#FFFFFF'
             },
             'bars_vertical': {
                 'module_drawer': 'vertical_bars',
+                'eye_drawer': 'square',
                 'fill_color': '#CC5500',
                 'back_color': '#FFFFFF',
                 'color_mask': 'solid'

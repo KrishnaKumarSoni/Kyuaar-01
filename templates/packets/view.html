@@ -48,8 +48,14 @@
                             <p class="text-lg font-semibold text-foreground">{{ packet.qr_count }} codes</p>
                         </div>
                         <div>
-                            <p class="text-sm text-muted-foreground">Price</p>
-                            <p class="text-lg font-semibold text-foreground">₹{{ packet.price|int if packet.price else 0 }}</p>
+                            <p class="text-sm text-muted-foreground">Sale Price</p>
+                            <p class="text-lg font-semibold text-foreground">
+                                {% if packet.sale_price %}
+                                    ₹{{ packet.sale_price|int }}
+                                {% else %}
+                                    <span class="text-zinc-400">Not set</span>
+                                {% endif %}
+                            </p>
                         </div>
                     </div>
                     
@@ -175,10 +181,10 @@
                 
                 <div class="space-y-3">
                     {% if packet.state == 'setup_pending' %}
-                    <a href="{{ url_for('packets.upload') }}?packet_id={{ packet.id }}" class="btn btn-primary w-full">
+                    <button onclick="uploadQRImage()" class="btn btn-primary w-full">
                         <i class="ph ph-upload mr-2"></i>
                         Upload QR Image
-                    </a>
+                    </button>
                     {% elif packet.state == 'setup_done' %}
                     <button onclick="showSellModal()" class="btn btn-primary w-full">
                         <i class="ph ph-currency-circle-dollar mr-2"></i>
@@ -220,14 +226,10 @@
                         <span class="text-zinc-400">QR Codes</span>
                         <span class="font-semibold">{{ packet.qr_count }}</span>
                     </div>
-                    <div class="flex items-center justify-between">
-                        <span class="text-zinc-400">Price</span>
-                        <span class="font-semibold">₹{{ packet.price|int if packet.price else 0 }}</span>
-                    </div>
                     {% if packet.sale_price %}
                     <div class="flex items-center justify-between">
                         <span class="text-zinc-400">Sale Price</span>
-                        <span class="font-semibold text-green-400">₹{{ packet.sale_price|int if packet.sale_price else 0 }}</span>
+                        <span class="font-semibold text-green-400">₹{{ packet.sale_price|int }}</span>
                     </div>
                     {% endif %}
                 </div>
@@ -241,7 +243,7 @@
     <div class="card max-w-md w-full mx-4 p-6" @click.away="show = false">
         <h3 class="text-xl font-semibold mb-4">Mark Packet as Sold</h3>
         
-        <form action="{{ url_for('packets.mark_sold', packet_id=packet.id) }}" method="POST" class="space-y-4">
+        <form onsubmit="markAsSold(event)" class="space-y-4">
             <div class="space-y-2">
                 <label for="buyer_name" class="block text-sm font-medium text-foreground mb-2">Buyer Name *</label>
                 <input 
@@ -276,8 +278,8 @@
                         step="1"
                         min="0"
                         class="w-full pl-8 pr-3 py-2 rounded-lg border border-zinc-800 bg-zinc-900 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors" 
-                        placeholder="{{ packet.price|int if packet.price else 0 }}"
-                        value="{{ packet.price|int if packet.price else 0 }}"
+                        placeholder="500"
+                        value="{{ packet.sale_price|int if packet.sale_price else 500 }}"
                     >
                 </div>
             </div>
@@ -309,6 +311,66 @@ function hideSellModal() {
 function copyToClipboard(text) {
     navigator.clipboard.writeText(text);
     // Could add a toast notification here
+}
+
+function uploadQRImage() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/png,image/jpeg,image/jpg';
+    input.onchange = async function(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        const formData = new FormData();
+        formData.append('qr_image', file);
+        
+        try {
+            const response = await fetch(`/api/packets/{{ packet.id }}/upload`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (response.ok) {
+                location.reload();
+            } else {
+                const error = await response.json();
+                alert('Upload failed: ' + (error.error || 'Unknown error'));
+            }
+        } catch (error) {
+            alert('Upload error: ' + error.message);
+        }
+    };
+    input.click();
+}
+
+async function markAsSold(event) {
+    event.preventDefault();
+    
+    const formData = new FormData(event.target);
+    const data = {
+        buyer_name: formData.get('buyer_name'),
+        buyer_email: formData.get('buyer_email'),
+        sale_price: parseFloat(formData.get('sale_price')) || null
+    };
+    
+    try {
+        const response = await fetch(`/api/packets/{{ packet.id }}/sell`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+        
+        if (response.ok) {
+            location.reload();
+        } else {
+            const error = await response.json();
+            alert('Failed to mark as sold: ' + (error.error || 'Unknown error'));
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
 }
 </script>
 {% endblock %}

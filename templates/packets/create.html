@@ -17,7 +17,7 @@
             </a>
             <div>
                 <h1 class="text-3xl font-bold">Create New Packet</h1>
-                <p class="text-zinc-400">Set up a new QR code packet with pricing and upload QR image</p>
+                <p class="text-zinc-400">Set up a new QR code packet with simple sale pricing</p>
             </div>
         </div>
     </div>
@@ -51,77 +51,46 @@
                     <p class="text-xs text-muted-foreground">Number of QR codes in this packet (1-100)</p>
                 </div>
                 
-                <div class="card p-4 bg-zinc-800/50">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="font-medium">Estimated Cost</p>
-                            <p class="text-sm text-zinc-400">₹33 per QR code</p>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-2xl font-bold text-primary" x-text="'₹' + (qrCount * 33).toFixed(0)"></p>
-                            <p class="text-xs text-zinc-400">Total cost</p>
-                        </div>
-                    </div>
-                </div>
             </div>
             
-            <!-- Pricing Configuration -->
+            <!-- Sale Price Configuration -->
             <div class="space-y-4 border-t border-zinc-800 pt-6">
                 <h2 class="text-lg font-semibold flex items-center">
                     <i class="ph ph-currency-circle-dollar mr-2 text-primary"></i>
-                    Pricing Configuration
+                    Sale Price Configuration
                 </h2>
                 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="space-y-2">
-                        <label for="price_per_scan" class="block text-sm font-medium text-foreground mb-2">Price per QR Scan *</label>
-                        <div class="relative">
-                            <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-400">₹</span>
-                            <input 
-                                id="price_per_scan" 
-                                name="price_per_scan" 
-                                type="number" 
-                                min="1"
-                                max="1000"
-                                step="1"
-                                required
-                                x-model="pricePerScan"
-                                @blur="validatePricePerScan"
-                                class="w-full pl-8 pr-3 py-2 rounded-lg border border-zinc-800 bg-zinc-900 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors" 
-                                placeholder="50"
-                                value="50"
-                            >
-                        </div>
-                        <p x-show="errors.pricePerScan" x-text="errors.pricePerScan" class="text-sm text-red-500"></p>
-                        <p class="text-xs text-muted-foreground">Amount customer pays per QR code scan</p>
-                    </div>
-                    
-                    <div class="space-y-2">
-                        <label for="redirect_url" class="block text-sm font-medium text-foreground mb-2">Default Redirect URL *</label>
+                <div class="space-y-2">
+                    <label for="sale_price" class="block text-sm font-medium text-foreground mb-2">Sale Price for Entire Packet</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-400">₹</span>
                         <input 
-                            id="redirect_url" 
-                            name="redirect_url" 
-                            type="url" 
-                            required
-                            x-model="redirectUrl"
-                            @blur="validateRedirectUrl"
-                            class="w-full px-3 py-2 rounded-lg border border-zinc-800 bg-zinc-900 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors" 
-                            placeholder="https://wa.me/1234567890"
+                            id="sale_price" 
+                            name="sale_price" 
+                            type="number" 
+                            min="0"
+                            max="10000"
+                            step="1"
+                            x-model="salePrice"
+                            @blur="validateSalePrice"
+                            class="w-full pl-8 pr-3 py-2 rounded-lg border border-zinc-800 bg-zinc-900 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors" 
+                            placeholder="500"
+                            value="500"
                         >
-                        <p x-show="errors.redirectUrl" x-text="errors.redirectUrl" class="text-sm text-red-500"></p>
-                        <p class="text-xs text-muted-foreground">WhatsApp link or website URL to redirect users</p>
                     </div>
+                    <p x-show="errors.salePrice" x-text="errors.salePrice" class="text-sm text-red-500"></p>
+                    <p class="text-xs text-muted-foreground">Amount you'll charge when selling this packet (optional - can be set later)</p>
                 </div>
                 
-                <div class="card p-4 bg-green-500/10 border-green-500/20">
+                <div class="card p-4 bg-blue-500/10 border-blue-500/20">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="font-medium text-green-300">Revenue Projection</p>
-                            <p class="text-sm text-green-200">If all QR codes are scanned</p>
+                            <p class="font-medium text-blue-300">Packet Overview</p>
+                            <p class="text-sm text-blue-200">QR codes will redirect to customer-configured destinations</p>
                         </div>
                         <div class="text-right">
-                            <p class="text-2xl font-bold text-green-400" x-text="'₹' + (qrCount * pricePerScan).toFixed(0)"></p>
-                            <p class="text-xs text-green-300">Total potential revenue</p>
+                            <p class="text-2xl font-bold text-blue-400" x-text="qrCount + ' QRs'"></p>
+                            <p class="text-xs text-blue-300">All redirect to same destination</p>
                         </div>
                     </div>
                 </div>
@@ -260,8 +229,7 @@
 function createPacketForm() {
     return {
         qrCount: 25,
-        pricePerScan: 50,
-        redirectUrl: '',
+        salePrice: 500,
         loading: false,
         selectedFile: null,
         previewImage: false,
@@ -272,13 +240,12 @@ function createPacketForm() {
         error: '',
         errors: {
             qrCount: '',
-            pricePerScan: '',
-            redirectUrl: ''
+            salePrice: ''
         },
         
         get isValid() {
-            return this.qrCount && this.pricePerScan && this.redirectUrl && this.selectedFile && 
-                   !this.errors.qrCount && !this.errors.pricePerScan && !this.errors.redirectUrl;
+            return this.qrCount && this.selectedFile && 
+                   !this.errors.qrCount && !this.errors.salePrice;
         },
         
         validateQrCount() {
@@ -293,25 +260,13 @@ function createPacketForm() {
             }
         },
         
-        validatePricePerScan() {
-            if (!this.pricePerScan) {
-                this.errors.pricePerScan = 'Price per scan is required';
-            } else if (this.pricePerScan < 1) {
-                this.errors.pricePerScan = 'Price must be at least ₹1';
-            } else if (this.pricePerScan > 1000) {
-                this.errors.pricePerScan = 'Price cannot exceed ₹1000';
+        validateSalePrice() {
+            if (this.salePrice < 0) {
+                this.errors.salePrice = 'Price must be 0 or higher';
+            } else if (this.salePrice > 10000) {
+                this.errors.salePrice = 'Price cannot exceed ₹10,000';
             } else {
-                this.errors.pricePerScan = '';
-            }
-        },
-        
-        validateRedirectUrl() {
-            if (!this.redirectUrl) {
-                this.errors.redirectUrl = 'Redirect URL is required';
-            } else if (!this.isValidUrl(this.redirectUrl)) {
-                this.errors.redirectUrl = 'Please enter a valid URL';
-            } else {
-                this.errors.redirectUrl = '';
+                this.errors.salePrice = '';
             }
         },
         

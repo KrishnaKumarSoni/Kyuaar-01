@@ -213,6 +213,34 @@ def mark_packet_sold(packet_id):
         logger.error(f"Error marking packet {packet_id} as sold: {e}")
         return jsonify({'error': 'Failed to mark packet as sold'}), 500
 
+@api_bp.route('/packets/<packet_id>', methods=['DELETE'])
+@login_required
+def delete_packet(packet_id):
+    """Delete a packet via API"""
+    try:
+        packet = Packet.get_by_id_and_user(packet_id, current_user.id)
+        if not packet:
+            return jsonify({'error': 'Packet not found'}), 404
+        
+        # Delete the packet
+        if packet.delete():
+            # Log the deletion activity
+            Activity.log(
+                user_id=current_user.id,
+                activity_type=ActivityType.PACKET_DELETED,
+                title="Packet Deleted",
+                description=f"Deleted packet with {packet.qr_count} QR codes",
+                metadata={'packet_id': packet_id, 'qr_count': packet.qr_count}
+            )
+            
+            return jsonify({'message': 'Packet deleted successfully'})
+        else:
+            return jsonify({'error': 'Failed to delete packet'}), 500
+        
+    except Exception as e:
+        logger.error(f"Error deleting packet {packet_id}: {e}")
+        return jsonify({'error': 'Failed to delete packet'}), 500
+
 # ============= USER STATISTICS API =============
 
 @api_bp.route('/user/statistics', methods=['GET'])

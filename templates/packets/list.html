@@ -58,8 +58,13 @@
                             </td>
                             <td class="p-4">
                                 <div class="text-sm">
-                                    <p class="font-medium text-foreground">₹{{ packet.price|int if packet.price else 0 }}</p>
-                                    <p class="text-xs text-zinc-400">{{ packet.qr_count }} QR codes</p>
+                                    {% if packet.sale_price %}
+                                        <p class="font-medium text-foreground">₹{{ packet.sale_price|int }}</p>
+                                        <p class="text-xs text-zinc-400">Sale price</p>
+                                    {% else %}
+                                        <p class="font-medium text-zinc-400">Not set</p>
+                                        <p class="text-xs text-zinc-400">{{ packet.qr_count }} QR codes</p>
+                                    {% endif %}
                                 </div>
                             </td>
                             <td class="p-4">
@@ -114,12 +119,12 @@ async function markAsSold(packetId) {
     const buyerEmail = prompt('Enter buyer email (optional):') || '';
     
     try {
-        const response = await fetch(`/packets/${packetId}/sell`, {
+        const response = await fetch(`/api/packets/${packetId}/sell`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
+                'Content-Type': 'application/json',
             },
-            body: new URLSearchParams({
+            body: JSON.stringify({
                 'buyer_name': buyerName,
                 'buyer_email': buyerEmail
             })
@@ -141,10 +146,10 @@ async function deletePacket(packetId) {
     }
     
     try {
-        const response = await fetch(`/packets/${packetId}/delete`, {
-            method: 'POST',
+        const response = await fetch(`/api/packets/${packetId}`, {
+            method: 'DELETE',
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
+                'Content-Type': 'application/json',
             }
         });
         

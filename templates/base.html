@@ -354,6 +354,10 @@
                        href="{{ url_for('packets.list') }}">
                         Packets
                     </a>
+                    <a class="transition-colors hover:text-foreground/80 text-foreground/60 {% if request.endpoint and 'qr' in request.endpoint %}text-foreground{% endif %}" 
+                       href="{{ url_for('qr.generate') }}">
+                        Generate QR
+                    </a>
                     <a class="transition-colors hover:text-foreground/80 text-foreground/60 {% if request.endpoint and 'config' in request.endpoint %}text-foreground{% endif %}" 
                        href="{{ url_for('config.settings') }}">
                         Settings
@@ -435,6 +439,10 @@
                 <a href="{{ url_for('packets.list') }}" 
                    class="text-muted-foreground hover:bg-accent hover:text-accent-foreground block rounded-md px-3 py-2 text-base font-medium {% if request.endpoint and 'packets' in request.endpoint %}bg-accent text-accent-foreground{% endif %}">
                     <i class="ph ph-package mr-2"></i>Packets
+                </a>
+                <a href="{{ url_for('qr.generate') }}" 
+                   class="text-muted-foreground hover:bg-accent hover:text-accent-foreground block rounded-md px-3 py-2 text-base font-medium {% if request.endpoint and 'qr' in request.endpoint %}bg-accent text-accent-foreground{% endif %}">
+                    <i class="ph ph-qr-code mr-2"></i>Generate QR
                 </a>
                 <a href="{{ url_for('config.settings') }}" 
                    class="text-muted-foreground hover:bg-accent hover:text-accent-foreground block rounded-md px-3 py-2 text-base font-medium {% if request.endpoint and 'config' in request.endpoint %}bg-accent text-accent-foreground{% endif %}">

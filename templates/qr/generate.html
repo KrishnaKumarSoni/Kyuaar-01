@@ -1,0 +1,389 @@
+{% extends "base.html" %}
+
+{% block title %}Generate QR Code - Kyuaar{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold mb-2">Generate Custom QR Code</h1>
+        <p class="text-zinc-400">Create stylized QR codes with custom colors, shapes, corners, and data dot patterns</p>
+    </div>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8" x-data="qrGenerator()">
+        <!-- QR Code Generation Form -->
+        <div class="card p-6 space-y-6">
+            <div>
+                <h3 class="text-lg font-semibold mb-4">Configuration</h3>
+            </div>
+            
+            <!-- URL Input -->
+            <div>
+                <label class="block text-sm font-medium mb-2">URL to Encode</label>
+                <input type="url" 
+                       x-model="url" 
+                       @input="debouncePreview" 
+                       placeholder="https://example.com"
+                       class="w-full px-3 py-2 rounded-lg border">
+                <p class="text-xs text-zinc-400 mt-1">Enter the URL you want to encode in the QR code</p>
+            </div>
+            
+            <!-- Packet Selection -->
+            <div>
+                <label class="block text-sm font-medium mb-2">Link to Packet (Optional)</label>
+                <select x-model="selectedPacket" @change="loadPacketUrl" class="w-full px-3 py-2 rounded-lg border">
+                    <option value="">Select a packet or enter custom URL above</option>
+                    {% for packet in packets %}
+                    <option value="{{ packet.id }}">{{ packet.id }} - {{ packet.qr_count }} QRs ({{ packet.state.replace('_', ' ').title() }})</option>
+                    {% endfor %}
+                </select>
+                <p class="text-xs text-zinc-400 mt-1">Generate QR for an existing packet's base URL</p>
+            </div>
+            
+            <!-- Style Presets -->
+            <div class="border-t border-zinc-800 pt-6">
+                <label class="block text-sm font-medium mb-3">Quick Style Presets</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <template x-for="(preset, name) in presets" :key="name">
+                        <button @click="applyPreset(name)" 
+                                :class="selectedPreset === name ? 'btn-primary' : 'btn-outline'"
+                                class="btn text-sm py-2" 
+                                x-text="name.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())">
+                        </button>
+                    </template>
+                </div>
+            </div>
+            
+            <!-- Advanced Customization -->
+            <div class="space-y-4 border-t border-zinc-800 pt-6">
+                <h4 class="font-medium text-primary">Advanced Customization</h4>
+                
+                <!-- Data Dot Shape -->
+                <div>
+                    <label class="block text-sm font-medium mb-2">Data Dot Shape</label>
+                    <select x-model="settings.module_drawer" @change="debouncePreview" class="w-full px-3 py-2 rounded-lg border">
+                        <option value="square">Square (Classic)</option>
+                        <option value="rounded">Rounded Square</option>
+                        <option value="circle">Circular Dots</option>
+                        <option value="vertical_bars">Vertical Lines</option>
+                        <option value="horizontal_bars">Horizontal Lines</option>
+                    </select>
+                    <p class="text-xs text-zinc-400 mt-1">Shape of the data-carrying dots in the QR code</p>
+                </div>
+                
+                <!-- Corner/Eye Shape -->
+                <div>
+                    <label class="block text-sm font-medium mb-2">Corner Pattern (Eyes)</label>
+                    <select x-model="settings.eye_drawer" @change="debouncePreview" class="w-full px-3 py-2 rounded-lg border">
+                        <option value="square">Square Corners</option>
+                        <option value="circle">Circular Corners</option>
+                        <option value="rounded">Rounded Corners</option>
+                    </select>
+                    <p class="text-xs text-zinc-400 mt-1">Shape of the three corner finder patterns</p>
+                </div>
+                
+                <!-- Color Mode -->
+                <div>
+                    <label class="block text-sm font-medium mb-2">Color Style</label>
+                    <select x-model="settings.color_mask" @change="debouncePreview" class="w-full px-3 py-2 rounded-lg border">
+                        <option value="solid">Solid Colors</option>
+                        <option value="radial_gradient">Radial Gradient</option>
+                        <option value="square_gradient">Square Gradient</option>
+                    </select>
+                </div>
+                
+                <!-- Solid Colors -->
+                <div class="grid grid-cols-2 gap-4" x-show="settings.color_mask === 'solid'">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Foreground Color</label>
+                        <input type="color" 
+                               x-model="settings.fill_color" 
+                               @change="debouncePreview"
+                               class="w-full h-10 rounded-lg border">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Background Color</label>
+                        <input type="color" 
+                               x-model="settings.back_color" 
+                               @change="debouncePreview"
+                               class="w-full h-10 rounded-lg border">
+                    </div>
+                </div>
+                
+                <!-- Gradient Colors -->
+                <div class="grid grid-cols-2 gap-4" x-show="settings.color_mask !== 'solid'" style="display: none;">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Start Color</label>
+                        <input type="color" 
+                               x-model="settings.gradient_colors[0]" 
+                               @change="debouncePreview"
+                               class="w-full h-10 rounded-lg border">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">End Color</label>
+                        <input type="color" 
+                               x-model="settings.gradient_colors[1]" 
+                               @change="debouncePreview"
+                               class="w-full h-10 rounded-lg border">
+                    </div>
+                </div>
+                
+                <!-- Size Controls -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Module Size</label>
+                        <input type="range" 
+                               x-model="settings.box_size" 
+                               @input="debouncePreview"
+                               min="5" max="20" 
+                               class="w-full">
+                        <div class="text-xs text-zinc-400 mt-1" x-text="settings.box_size + 'px per module'"></div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Border Width</label>
+                        <input type="range" 
+                               x-model="settings.border" 
+                               @input="debouncePreview"
+                               min="1" max="10" 
+                               class="w-full">
+                        <div class="text-xs text-zinc-400 mt-1" x-text="settings.border + ' modules'"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="flex space-x-3 pt-4 border-t border-zinc-800">
+                <button @click="generatePreview" 
+                        :disabled="!url || loading" 
+                        class="btn btn-secondary flex-1">
+                    <i class="ph ph-eye mr-2"></i>
+                    <span x-show="!loading">Update Preview</span>
+                    <span x-show="loading">Generating...</span>
+                </button>
+                <button @click="saveQRCode" 
+                        :disabled="!url || !previewImage || loading" 
+                        class="btn btn-primary flex-1">
+                    <i class="ph ph-floppy-disk mr-2"></i>
+                    Save to Firebase
+                </button>
+            </div>
+        </div>
+        
+        <!-- Preview Area -->
+        <div class="space-y-6">
+            <!-- QR Code Preview -->
+            <div class="card p-6">
+                <h3 class="text-lg font-semibold mb-4">Live Preview</h3>
+                
+                <div class="bg-white rounded-lg p-8 text-center min-h-[300px] flex items-center justify-center">
+                    <div x-show="loading" class="text-center">
+                        <i class="ph ph-circle-notch animate-spin text-4xl text-zinc-600 mb-3"></i>
+                        <p class="text-zinc-600">Generating QR code...</p>
+                    </div>
+                    
+                    <div x-show="previewImage && !loading" class="space-y-4">
+                        <img :src="previewImage" 
+                             alt="QR Code Preview" 
+                             class="mx-auto max-w-full h-auto border border-zinc-200 rounded">
+                        <div class="text-sm text-zinc-600">
+                            <p class="font-medium">Encoded URL:</p>
+                            <p class="font-mono text-xs break-all bg-zinc-100 px-2 py-1 rounded" x-text="url"></p>
+                        </div>
+                    </div>
+                    
+                    <div x-show="!previewImage && !loading && url" class="text-center py-8 text-zinc-400">
+                        <i class="ph ph-qr-code text-4xl mb-2"></i>
+                        <p>Click "Update Preview" to generate</p>
+                    </div>
+                    
+                    <div x-show="!url && !loading" class="text-center py-8 text-zinc-400">
+                        <i class="ph ph-link text-4xl mb-2"></i>
+                        <p>Enter a URL to get started</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Download & Actions -->
+            <div x-show="previewImage" class="card p-6 space-y-4">
+                <h4 class="font-medium">Download Options</h4>
+                <div class="grid grid-cols-2 gap-3">
+                    <button @click="downloadQR('png')" class="btn btn-outline">
+                        <i class="ph ph-download mr-2"></i>
+                        Download PNG
+                    </button>
+                    <button @click="copyToClipboard" class="btn btn-outline">
+                        <i class="ph ph-copy mr-2"></i>
+                        Copy Image
+                    </button>
+                </div>
+                <div class="text-xs text-zinc-400">
+                    <p><strong>Image size:</strong> <span x-text="imageSize"></span></p>
+                    <p><strong>Generated:</strong> <span x-text="new Date().toLocaleString()"></span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function qrGenerator() {
+    return {
+        url: '',
+        selectedPacket: '',
+        selectedPreset: 'default',
+        loading: false,
+        previewImage: null,
+        imageSize: '',
+        presets: {},
+        previewTimeout: null,
+        settings: {
+            module_drawer: 'square',
+            eye_drawer: 'square',
+            fill_color: '#000000',
+            back_color: '#FFFFFF',
+            color_mask: 'solid',
+            gradient_colors: ['#CC5500', '#FF6600'],
+            box_size: 10,
+            border: 4
+        },
+        
+        async init() {
+            await this.loadPresets();
+            // Auto-generate preview if URL is provided
+            if (this.url) {
+                this.generatePreview();
+            }
+        },
+        
+        async loadPresets() {
+            try {
+                const response = await fetch('/api/qr/presets');
+                const data = await response.json();
+                this.presets = data.presets;
+            } catch (error) {
+                console.error('Error loading presets:', error);
+            }
+        },
+        
+        applyPreset(presetName) {
+            this.selectedPreset = presetName;
+            if (this.presets[presetName]) {
+                Object.assign(this.settings, this.presets[presetName]);
+                this.debouncePreview();
+            }
+        },
+        
+        loadPacketUrl() {
+            if (this.selectedPacket) {
+                this.url = `${window.location.origin}/packet/${this.selectedPacket}`;
+                this.debouncePreview();
+            }
+        },
+        
+        debouncePreview() {
+            if (this.previewTimeout) {
+                clearTimeout(this.previewTimeout);
+            }
+            this.previewTimeout = setTimeout(() => {
+                this.generatePreview();
+            }, 500);
+        },
+        
+        async generatePreview() {
+            if (!this.url.trim()) return;
+            
+            this.loading = true;
+            try {
+                const response = await fetch('/api/qr/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        url: this.url,
+                        packet_id: this.selectedPacket || null,
+                        settings: this.settings
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    this.previewImage = data.image_data_url;
+                    this.imageSize = `${data.size[0]} × ${data.size[1]} pixels`;
+                } else {
+                    throw new Error(data.error || 'Failed to generate QR code');
+                }
+            } catch (error) {
+                console.error('Error generating QR preview:', error);
+                alert('Error generating QR code: ' + error.message);
+                this.previewImage = null;
+            } finally {
+                this.loading = false;
+            }
+        },
+        
+        async saveQRCode() {
+            if (!this.previewImage) {
+                alert('Please generate a preview first');
+                return;
+            }
+            
+            try {
+                const imageBase64 = this.previewImage.split(',')[1];
+                
+                const response = await fetch('/api/qr/save', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        image_base64: imageBase64,
+                        packet_id: this.selectedPacket || null,
+                        url: this.url,
+                        settings: this.settings
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    alert('QR code saved to Firebase successfully!\\n\\nImage URL: ' + data.image_url);
+                } else {
+                    throw new Error(data.error || 'Failed to save QR code');
+                }
+            } catch (error) {
+                console.error('Error saving QR code:', error);
+                alert('Error saving QR code: ' + error.message);
+            }
+        },
+        
+        downloadQR(format) {
+            if (!this.previewImage) return;
+            
+            const link = document.createElement('a');
+            link.download = `qr_code_${Date.now()}.${format}`;
+            link.href = this.previewImage;
+            link.click();
+        },
+        
+        async copyToClipboard() {
+            if (!this.previewImage) return;
+            
+            try {
+                const response = await fetch(this.previewImage);
+                const blob = await response.blob();
+                await navigator.clipboard.write([
+                    new ClipboardItem({ 'image/png': blob })
+                ]);
+                alert('QR code image copied to clipboard!');
+            } catch (error) {
+                console.error('Error copying to clipboard:', error);
+                alert('Copy to clipboard not supported in this browser');
+            }
+        }
+    }
+}
+</script>
+
+{% endblock %}
