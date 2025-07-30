@@ -19,7 +19,7 @@
         </div>
         
         <!-- Login Form -->
-        <form class="mt-8 space-y-6" action="{{ url_for('auth.login') }}" method="POST" x-data="loginForm()">
+        <form class="mt-8 space-y-6" action="{{ url_for('auth.login') }}" method="POST" x-data="loginForm()" @submit="handleSubmit">
             <div class="card p-6 space-y-4">
                 <!-- Email Field -->
                 <div class="space-y-2">
@@ -166,6 +166,24 @@ function loginForm() {
             } else {
                 this.errors.password = '';
             }
+        },
+        
+        handleSubmit(event) {
+            this.loading = true;
+            
+            // Validate all fields
+            this.validateEmail();
+            this.validatePassword();
+            
+            // If validation fails, prevent submission
+            if (!this.isValid) {
+                event.preventDefault();
+                this.loading = false;
+                return false;
+            }
+            
+            // Let the form submit normally to the backend
+            return true;
         }
     }
 }

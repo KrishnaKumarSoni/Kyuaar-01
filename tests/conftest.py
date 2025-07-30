@@ -14,7 +14,11 @@ os.environ['TESTING'] = 'true'
 os.environ['SECRET_KEY'] = 'test-secret-key'
 os.environ['FIREBASE_STORAGE_BUCKET'] = 'test-bucket'
 
-from app import app as flask_app, db
+# Mock Firebase before importing app
+with patch('firebase_admin.initialize_app'), \
+     patch('firebase_admin.firestore.client'), \
+     patch('firebase_admin.storage.bucket'):
+    from app import app as flask_app
 
 
 @pytest.fixture

@@ -1,17 +1,18 @@
-"""WSGI configuration for Vercel deployment."""
+"""
+WSGI entry point for Vercel deployment
+Configures the Flask application for serverless deployment
+"""
+
 import os
 import sys
 
 # Add the current directory to the Python path
 sys.path.insert(0, os.path.dirname(__file__))
 
-from app import create_app
+from app import app
 
-# Create Flask application instance
-app = create_app()
-
-# WSGI application object for Gunicorn
+# This is the entry point for WSGI servers like Gunicorn and Vercel
 application = app
 
 if __name__ == "__main__":
-    app.run(debug=False)
+    application.run(debug=False)

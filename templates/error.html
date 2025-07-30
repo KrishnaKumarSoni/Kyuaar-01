@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error - Kyuaar</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Tailwind Config for Dark Mode and Custom Colors -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#CC5500',
+                        'primary-dark': '#AA4500',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex items-center justify-center">
+    <div class="container mx-auto px-4 max-w-md text-center">
+        <!-- Error Icon -->
+        <div class="mb-6">
+            <div class="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center mx-auto">
+                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Error Content -->
+        <div class="bg-gray-800 rounded-lg p-6 shadow-lg">
+            <h1 class="text-xl font-bold text-red-400 mb-4">{{ error_message }}</h1>
+            {% if error_details %}
+            <p class="text-gray-300 mb-6">{{ error_details }}</p>
+            {% endif %}
+            
+            <!-- Action Button -->
+            <div class="space-y-3">
+                <button onclick="window.history.back()" 
+                        class="w-full bg-primary hover:bg-primary-dark text-white font-medium py-2 px-4 rounded-md transition duration-200">
+                    Go Back
+                </button>
+                
+                <a href="/" 
+                   class="block w-full bg-gray-700 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-md transition duration-200">
+                    Home
+                </a>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="mt-8">
+            <p class="text-gray-500 text-sm">
+                Powered by <span class="text-primary font-semibold">Kyuaar</span>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

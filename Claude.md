@@ -104,3 +104,4 @@ For WSGI-based imports (detailed explanation): Vercel deploys Flask apps serverl
 * In vercel.json, set the runtime to Python and the entry point to gunicorn (e.g., "framework": "flask", but manually configure if needed).
 * Start command: gunicorn -w 1 -k gthread --timeout 60 wsgi:application.
 * This ensures Vercel's serverless functions wrap your Flask app via WSGI, handling requests efficiently without a persistent server. Test locally with gunicorn before deploying. If issues arise, fallback to a Procfile with web: gunicorn wsgi:application.
+verceo project name: kyuaar-01 (create new)

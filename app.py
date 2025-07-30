@@ -5,10 +5,10 @@ Main application entry point with Firebase integration
 
 import os
 import logging
-from flask import Flask, jsonify
+from datetime import datetime, timezone, timedelta
+from flask import Flask, jsonify, redirect, url_for, request, render_template
 from flask_cors import CORS
 from flask_login import LoginManager
-from datetime import timedelta
 import firebase_admin
 from firebase_admin import credentials, firestore, storage
 from dotenv import load_dotenv
@@ -60,19 +60,116 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'auth.login'
 
+# User loader for Flask-Login
+@login_manager.user_loader
+def load_user(user_id):
+    """Load user by ID for Flask-Login"""
+    try:
+        from models.user import User
+        return User.get_by_id(user_id)
+    except Exception as e:
+        logger.error(f"Error loading user {user_id}: {e}")
+        return None
+
 # Import blueprints
 from routes.auth import auth_bp
+from routes.dashboard import dashboard_bp
 from routes.packets import packets_bp
-from routes.admin import admin_bp
-from routes.redirect import redirect_bp
-from routes.analytics import analytics_bp
+from routes.config import config_bp
+from routes.api import api_bp
 
-# Register blueprints
-app.register_blueprint(auth_bp, url_prefix='/api/auth')
-app.register_blueprint(packets_bp, url_prefix='/api/packets')
-app.register_blueprint(admin_bp, url_prefix='/api/admin')
-app.register_blueprint(redirect_bp, url_prefix='/packet')
-app.register_blueprint(analytics_bp, url_prefix='/api/analytics')
+# Register blueprints with web UI routes
+app.register_blueprint(auth_bp, url_prefix='/auth')
+app.register_blueprint(dashboard_bp, url_prefix='/')
+app.register_blueprint(packets_bp, url_prefix='/packets')
+app.register_blueprint(config_bp, url_prefix='/config')
+
+# Register API blueprint
+app.register_blueprint(api_bp, url_prefix='/api')
+
+# Customer-facing packet redirect handler
+@app.route('/packet/<packet_id>')
+def handle_packet_redirect(packet_id):
+    """Handle QR code scans and redirect based on packet state"""
+    try:
+        from models.packet import Packet, PacketStates
+        from flask import render_template, redirect as flask_redirect
+        
+        # Get packet
+        db = firestore.client()
+        packet_doc = db.collection('packets').document(packet_id).get()
+        
+        if not packet_doc.exists:
+            return render_template('error.html', 
+                                 error_message="Invalid QR code",
+                                 error_details="This QR code is not recognized."), 404
+        
+        packet_data = packet_doc.to_dict()
+        packet = Packet.from_dict(packet_data)
+        
+        # Log scan
+        scan_log = {
+            'packet_id': packet_id,
+            'scanned_at': datetime.now(timezone.utc),
+            'user_agent': request.headers.get('User-Agent'),
+            'ip_address': request.remote_addr
+        }
+        db.collection('scan_logs').add(scan_log)
+        
+        # Handle based on state
+        if packet.state == PacketStates.SETUP_PENDING:
+            return render_template('error.html',
+                                 error_message="Packet not ready",
+                                 error_details="This QR packet is being prepared. Please try again later."), 503
+        
+        elif packet.state == PacketStates.SETUP_DONE:
+            return render_template('error.html',
+                                 error_message="Packet not activated",
+                                 error_details="This QR packet has not been activated yet. Please contact the seller."), 403
+        
+        elif packet.state == PacketStates.CONFIG_PENDING:
+            # Show configuration page
+            return render_template('configure.html',
+                                 packet_id=packet_id,
+                                 packet_data=packet_data)
+        
+        elif packet.state == PacketStates.CONFIG_DONE:
+            # Redirect to configured URL
+            redirect_url = packet.redirect_url
+            if not redirect_url:
+                return render_template('error.html',
+                                     error_message="Configuration error",
+                                     error_details="No redirect URL configured."), 500
+            
+            # Check if user wants to reconfigure
+            if request.args.get('configure') == 'true':
+                return render_template('configure.html',
+                                     packet_id=packet_id,
+                                     packet_data=packet_data,
+                                     current_redirect=redirect_url)
+            
+            return flask_redirect(redirect_url)
+        
+        else:
+            return render_template('error.html',
+                                 error_message="Invalid state",
+                                 error_details="Packet is in an invalid state."), 500
+        
+    except Exception as e:
+        logger.error(f"Error handling packet redirect for {packet_id}: {e}")
+        return render_template('error.html',
+                             error_message="System error",
+                             error_details="An error occurred processing your request."), 500
+
+# Add redirect for root to dashboard or login
+@app.route('/')
+def index():
+    """Redirect root to appropriate page"""
+    from flask_login import current_user
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard.index'))
+    else:
+        return redirect(url_for('auth.login'))
 
 # Health check endpoint
 @app.route('/health')

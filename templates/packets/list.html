@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}Packets - Kyuaar{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-3xl font-bold mb-2">My Packets</h1>
+            <p class="text-zinc-400">Manage your QR code packets and redirects</p>
+        </div>
+        <div class="flex items-center space-x-3">
+            <a href="{{ url_for('packets.upload') }}" class="btn btn-secondary">
+                <i class="ph-upload mr-2"></i>
+                Upload QR
+            </a>
+            <a href="{{ url_for('packets.create') }}" class="btn btn-primary">
+                <i class="ph-plus mr-2"></i>
+                Create Packet
+            </a>
+        </div>
+    </div>
+    
+    <!-- Packets List -->
+    {% if packets %}
+        <div class="card">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="border-b border-zinc-800">
+                        <tr class="text-left">
+                            <th class="p-4 font-medium">Name</th>
+                            <th class="p-4 font-medium">Status</th>
+                            <th class="p-4 font-medium">Scans</th>
+                            <th class="p-4 font-medium">Created</th>
+                            <th class="p-4 font-medium">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for packet in packets %}
+                        <tr class="border-b border-zinc-800 hover:bg-zinc-900/50">
+                            <td class="p-4">
+                                <div class="flex items-center space-x-3">
+                                    <div class="p-2 rounded-lg bg-zinc-800">
+                                        <i class="ph-package text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium">{{ packet.id }}</p>
+                                        <p class="text-sm text-zinc-400">{{ packet.qr_count }} QR codes</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="p-4">
+                                <span class="px-2 py-1 text-xs rounded-full 
+                                    {% if packet.state == 'config_done' %}bg-green-500/20 text-green-400
+                                    {% elif packet.state == 'setup_pending' %}bg-yellow-500/20 text-yellow-400
+                                    {% elif packet.state == 'setup_done' %}bg-blue-500/20 text-blue-400
+                                    {% elif packet.state == 'config_pending' %}bg-purple-500/20 text-purple-400
+                                    {% else %}bg-zinc-500/20 text-zinc-400{% endif %}">
+                                    {{ packet.state.replace('_', ' ').title() }}
+                                </span>
+                            </td>
+                            <td class="p-4">
+                                <span class="font-medium">-</span>
+                                <p class="text-xs text-zinc-400">Coming soon</p>
+                            </td>
+                            <td class="p-4">
+                                <span class="text-zinc-400">{{ packet.created_at.strftime('%b %d, %Y') if packet.created_at else 'Unknown' }}</span>
+                            </td>
+                            <td class="p-4">
+                                <div class="flex items-center space-x-2">
+                                    <a href="{{ url_for('packets.view', packet_id=packet.id) }}" class="btn btn-ghost p-2" title="View">
+                                        <i class="ph-eye"></i>
+                                    </a>
+                                    {% if packet.state == 'setup_pending' %}
+                                    <a href="{{ url_for('packets.upload') }}?packet_id={{ packet.id }}" class="btn btn-ghost p-2 text-primary" title="Upload QR">
+                                        <i class="ph-upload"></i>
+                                    </a>
+                                    {% elif packet.state == 'setup_done' %}
+                                    <button class="btn btn-ghost p-2 text-green-400" title="Mark as Sold" onclick="markAsSold('{{ packet.id }}')">
+                                        <i class="ph-currency-dollar"></i>
+                                    </button>
+                                    {% endif %}
+                                    <button class="btn btn-ghost p-2 text-red-400 hover:text-red-300" title="Delete" onclick="deletePacket('{{ packet.id }}')">
+                                        <i class="ph-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% else %}
+        <!-- Empty State -->
+        <div class="card p-12 text-center">
+            <div class="flex justify-center mb-4">
+                <div class="p-4 rounded-full bg-zinc-800">
+                    <i class="ph-package text-4xl text-zinc-600"></i>
+                </div>
+            </div>
+            <h3 class="text-xl font-semibold mb-2">No packets yet</h3>
+            <p class="text-zinc-400 mb-6">Create your first packet to get started with QR code management</p>
+            <div class="flex items-center justify-center space-x-3">
+                <a href="{{ url_for('packets.create') }}" class="btn btn-primary">
+                    <i class="ph-plus mr-2"></i>
+                    Create Packet
+                </a>
+                <a href="{{ url_for('packets.upload') }}" class="btn btn-secondary">
+                    <i class="ph-upload mr-2"></i>
+                    Upload QR Code
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+async function markAsSold(packetId) {
+    const buyerName = prompt('Enter buyer name:');
+    if (!buyerName) return;
+    
+    const buyerEmail = prompt('Enter buyer email (optional):') || '';
+    
+    try {
+        const response = await fetch(`/packets/${packetId}/sell`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+                'buyer_name': buyerName,
+                'buyer_email': buyerEmail
+            })
+        });
+        
+        if (response.ok) {
+            location.reload();
+        } else {
+            alert('Failed to mark packet as sold');
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+async function deletePacket(packetId) {
+    if (!confirm('Are you sure you want to delete this packet? This action cannot be undone.')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/packets/${packetId}/delete`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            }
+        });
+        
+        if (response.ok) {
+            location.reload();
+        } else {
+            alert('Failed to delete packet');
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+</script>
+{% endblock %}

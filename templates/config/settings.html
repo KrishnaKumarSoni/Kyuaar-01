@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - Kyuaar{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold mb-2">Settings</h1>
+        <p class="text-zinc-400">Manage your account and application preferences</p>
+    </div>
+    
+    <!-- Settings Cards -->
+    <div class="space-y-6">
+        <!-- Profile Settings -->
+        <div class="card">
+            <div class="p-6 border-b border-zinc-800">
+                <h2 class="text-xl font-semibold flex items-center">
+                    <i class="ph-user mr-2 text-primary"></i>
+                    Profile Settings
+                </h2>
+            </div>
+            <div class="p-6">
+                <form class="space-y-4" x-data="profileForm()">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <label for="name" class="label">Full Name</label>
+                            <input 
+                                id="name" 
+                                name="name" 
+                                type="text" 
+                                class="input"
+                                :value="name"
+                                placeholder="Your full name"
+                            >
+                        </div>
+                        <div class="space-y-2">
+                            <label for="email" class="label">Email Address</label>
+                            <input 
+                                id="email" 
+                                name="email" 
+                                type="email" 
+                                class="input"
+                                :value="email"
+                                placeholder="your@email.com"
+                                disabled
+                            >
+                            <p class="text-xs text-zinc-400">Email cannot be changed</p>
+                        </div>
+                    </div>
+                    <div class="flex justify-end">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="ph-floppy-disk mr-2"></i>
+                            Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Security Settings -->
+        <div class="card">
+            <div class="p-6 border-b border-zinc-800">
+                <h2 class="text-xl font-semibold flex items-center">
+                    <i class="ph-shield mr-2 text-primary"></i>
+                    Security Settings
+                </h2>
+            </div>
+            <div class="p-6">
+                <form class="space-y-4" x-data="passwordForm()">
+                    <div class="space-y-2">
+                        <label for="current_password" class="label">Current Password</label>
+                        <input 
+                            id="current_password" 
+                            name="current_password" 
+                            type="password" 
+                            class="input"
+                            placeholder="Enter current password"
+                        >
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <label for="new_password" class="label">New Password</label>
+                            <input 
+                                id="new_password" 
+                                name="new_password" 
+                                type="password" 
+                                class="input"
+                                placeholder="Enter new password"
+                            >
+                        </div>
+                        <div class="space-y-2">
+                            <label for="confirm_password" class="label">Confirm New Password</label>
+                            <input 
+                                id="confirm_password" 
+                                name="confirm_password" 
+                                type="password" 
+                                class="input"
+                                placeholder="Confirm new password"
+                            >
+                        </div>
+                    </div>
+                    <div class="flex justify-end">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="ph-lock mr-2"></i>
+                            Update Password
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Theme Settings -->
+        <div class="card">
+            <div class="p-6 border-b border-zinc-800">
+                <h2 class="text-xl font-semibold flex items-center">
+                    <i class="ph-palette mr-2 text-primary"></i>
+                    Appearance
+                </h2>
+            </div>
+            <div class="p-6">
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="font-medium">Theme</p>
+                            <p class="text-sm text-zinc-400">Choose your preferred theme</p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="setTheme('light')" class="btn btn-ghost p-2" title="Light theme">
+                                <i class="ph-sun text-xl"></i>
+                            </button>
+                            <button onclick="setTheme('dark')" class="btn btn-ghost p-2" title="Dark theme">
+                                <i class="ph-moon text-xl"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Notification Settings -->
+        <div class="card">
+            <div class="p-6 border-b border-zinc-800">
+                <h2 class="text-xl font-semibold flex items-center">
+                    <i class="ph-bell mr-2 text-primary"></i>
+                    Notifications
+                </h2>
+            </div>
+            <div class="p-6">
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="font-medium">Email Notifications</p>
+                            <p class="text-sm text-zinc-400">Receive email updates about your packets</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" class="sr-only peer" checked>
+                            <div class="w-11 h-6 bg-zinc-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                        </label>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="font-medium">Push Notifications</p>
+                            <p class="text-sm text-zinc-400">Get notified when packets are scanned</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" class="sr-only peer">
+                            <div class="w-11 h-6 bg-zinc-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Danger Zone -->
+        <div class="card border-red-800">
+            <div class="p-6 border-b border-red-800">
+                <h2 class="text-xl font-semibold flex items-center text-red-400">
+                    <i class="ph-warning mr-2"></i>
+                    Danger Zone
+                </h2>
+            </div>
+            <div class="p-6">
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="font-medium text-red-400">Delete Account</p>
+                            <p class="text-sm text-zinc-400">Permanently delete your account and all data</p>
+                        </div>
+                        <button class="btn bg-red-900 hover:bg-red-800 text-red-100 border-red-800">
+                            <i class="ph-trash mr-2"></i>
+                            Delete Account
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function profileForm() {
+    return {
+        name: '{{ current_user.name }}',
+        email: '{{ current_user.email }}'
+    }
+}
+
+function passwordForm() {
+    return {
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+    }
+}
+
+function setTheme(theme) {
+    const html = document.documentElement;
+    if (theme === 'dark') {
+        html.classList.add('dark');
+    } else {
+        html.classList.remove('dark');
+    }
+    localStorage.setItem('theme', theme);
+}
+</script>
+{% endblock %}
