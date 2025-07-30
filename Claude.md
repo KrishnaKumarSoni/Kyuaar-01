@@ -1,6 +1,82 @@
 CLAUDE CODE: Kyuaar.com Project Guidelines
-Product Overview
-Kyuaar.com is a platform for pre-printed QR code packets that enable dynamic redirections, primarily for businesses to connect customers to WhatsApp or custom URLs. Each packet contains a configurable number of identical QR codes (default 25) that all point to a unique base URL. On first scan (after setup and sale), users configure a redirect (e.g., by entering a phone number), which applies to the entire packet. QR codes are generated externally via third-party tools (e.g., QRCode Monkey or GoQR.me for custom styles like rounded corners, burnt orange theme) and uploaded as images to the platform. The platform handles base URL generation, QR image uploads, packet states (setup pending/done, configuration pending/done), dynamic redirections, and basic business tracking for sales and revenue.
+
+## Product Overview
+Kyuaar.com is a revolutionary platform that empowers gig workers, service providers, and small businesses to build direct customer relationships and bypass platform commissions. Through pre-printed QR code packets, users create instant WhatsApp connections with customers, eliminating dependency on platforms like Uber, Zomato, Urban Company that take 20-30% commissions.
+
+**The Core Revolution:** Transform one-time platform transactions into direct, recurring customer relationships via WhatsApp Business.
+
+Each packet contains configurable QR codes (1-100) that point to a unique base URL. Users scan to configure their WhatsApp number or custom URL, instantly converting all QRs in the packet to direct customer connection points. This enables commission-free business growth and customer ownership.
+
+## Target Customer Segments
+
+### 1. Gig Economy Workers (Primary Market)
+**Revenue Impact:** Keep 100% earnings instead of 70-80% after platform commissions
+- **Cab/Auto Drivers:** Direct bookings for airport trips, office commutes, weekend trips
+- **Food Delivery Partners:** Direct restaurant orders, skip Zomato/Swiggy commissions
+- **Freelance Service Providers:** Direct client relationships without platform fees
+
+### 2. Service Professionals (High Value Market)
+**Revenue Impact:** Skip 30% Urban Company/platform commissions
+- **Home Services:** Electricians, plumbers, AC repair, appliance technicians
+- **Personal Care:** Salon professionals, massage therapists, beauticians
+- **Health & Wellness:** Doctors, physiotherapists, dietitians, fitness trainers
+
+### 3. Small Business Owners (Volume Market)
+**Revenue Impact:** Build customer database, reduce marketing costs
+- **Restaurants:** Direct table bookings, takeaway orders
+- **Retail Shops:** Customer notifications, loyalty programs
+- **Street Vendors:** Pre-orders, subscription services
+
+### 4. Professional Services (Premium Market)
+**Revenue Impact:** Higher-value recurring relationships
+- **Consultants:** Lawyers, CAs, business advisors
+- **Creative Professionals:** Photographers, designers, tutors
+- **Real Estate & Insurance:** Direct lead generation
+
+## Value Propositions by Segment
+
+### Economic Empowerment
+- **Commission Bypass:** Keep 100% of earnings vs 70-80% on platforms
+- **Revenue Multiplication:** One QR packet → 50+ direct customers → ₹15,000+ extra monthly
+- **Customer Ownership:** Build personal brand and recurring business
+- **Platform Independence:** Reduce dependency on monopolistic platforms
+
+### Customer Relationship Building
+- **Direct WhatsApp Connection:** Personal relationship vs platform transaction
+- **Recurring Revenue:** Regular customers book directly
+- **Upselling Opportunities:** WhatsApp Business features (catalog, payments, broadcasts)
+- **Community Building:** Customer groups, loyalty programs
+
+### Operational Benefits
+- **Instant Setup:** 30-second configuration via mobile
+- **Offline Operation:** Works without internet (scan and save contact)
+- **Professional Image:** Clean, branded QR codes vs handwritten numbers
+- **Multilingual Support:** WhatsApp auto-translation for diverse customers
+
+## Revenue Generation Use Cases
+
+### Immediate Revenue Impact
+1. **Cab Driver Example:**
+   - Investment: ₹33 for QR packet
+   - Action: Leave QR sticker in car after every ride
+   - Result: 2% passengers (1 per 50 rides) scan and save contact
+   - Outcome: 1 direct booking/day × ₹500 = ₹15,000/month extra income
+   - **ROI: 45,000%+ annually**
+
+2. **Service Provider Example:**
+   - Investment: ₹33 for QR packet  
+   - Action: Leave QR after every service call
+   - Result: 10% customers save contact for future needs
+   - Outcome: Skip 30% platform commission on repeat business
+   - **ROI: Direct commission savings of ₹1000s monthly**
+
+### Long-term Relationship Building
+- **WhatsApp Business Integration:** Product catalogs, payment links, customer groups
+- **Recurring Revenue Streams:** Weekly/monthly service contracts
+- **Referral Generation:** Satisfied customers share contact with friends
+- **Brand Building:** Personal reputation independent of platforms
+
+The platform handles base URL generation, QR image uploads, packet states (setup pending/done, configuration pending/done), dynamic redirections, and basic business tracking for sales and revenue.
 Key Features
 
 * Packet Creation: Generate packets with unique IDs and base URLs (e.g., kyuaar.com/packet/[id]). Specify the number of QRs in the packet (1-100). No QR images are generated in-app; only the endpoint is created. Initial state: Setup Pending.

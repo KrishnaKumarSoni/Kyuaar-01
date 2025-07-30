@@ -89,12 +89,16 @@ class CustomEyeStyler:
     
     @classmethod
     def style_eyes(cls, img: Image.Image, modules: list, eye_style: str = 'square',
-                  fill_color: str = 'black', back_color: str = 'white',
+                  fill_color = 'black', back_color = 'white',
                   box_size: int = 10, border: int = 4) -> Image.Image:
         """Apply custom styling to the finder patterns (eyes)"""
         
         if eye_style == 'square':
             return img  # No changes needed
+            
+        # Ensure colors are strings 
+        fill_color = str(fill_color)
+        back_color = str(back_color)
             
         eye_positions = cls.find_finder_patterns(modules)
         if not eye_positions:
@@ -212,9 +216,11 @@ class QRGenerator:
     def __init__(self):
         self.style_options = QRStyleOptions()
     
-    def _hex_to_rgb(self, hex_color: str) -> Tuple[int, int, int]:
+    def _hex_to_rgb(self, hex_color) -> Tuple[int, int, int]:
         """Convert hex color to RGB tuple"""
         try:
+            # Ensure hex_color is a string
+            hex_color = str(hex_color)
             if hex_color.startswith('#'):
                 hex_color = hex_color[1:]
             return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
