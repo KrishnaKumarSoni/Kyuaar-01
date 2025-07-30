@@ -26,25 +26,12 @@ from qrcode.image.styles.colormasks import (
     RadialGradiantColorMask,
     SquareGradiantColorMask
 )
-try:
-    from qrcode.image.styles.eyedrawers.pil import (
-        SquareEyeDrawer,
-        CircleEyeDrawer,
-        RoundedEyeDrawer
-    )
-except ImportError:
-    try:
-        # Try alternative import path
-        from qrcode.image.styles.eyedrawers import (
-            SquareEyeDrawer,
-            CircleEyeDrawer,
-            RoundedEyeDrawer
-        )
-    except ImportError:
-        # Fallback for older qrcode versions
-        SquareEyeDrawer = None
-        CircleEyeDrawer = None
-        RoundedEyeDrawer = None
+# Eye drawers don't exist in the qrcode library
+# The corner "eyes" are structural elements that cannot be customized
+# with the standard qrcode library. Only module drawers (data dots) can be styled.
+SquareEyeDrawer = None
+CircleEyeDrawer = None  
+RoundedEyeDrawer = None
 from PIL import Image, ImageDraw
 import io
 import base64
@@ -56,6 +43,135 @@ import os
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
+
+class CustomEyeStyler:
+    """Custom eye corner styling for QR codes"""
+    
+    @staticmethod
+    def find_finder_patterns(modules: list) -> list:
+        """Find the positions and sizes of the three finder patterns (eyes)"""
+        if not modules:
+            return []
+            
+        size = len(modules)
+        finder_size = 7  # Standard finder pattern is 7x7 modules
+        
+        # Define the three standard positions
+        positions = [
+            (0, 0),  # Top-left
+            (size - finder_size, 0),  # Top-right  
+            (0, size - finder_size),  # Bottom-left
+        ]
+        
+        return [(x, y, finder_size) for x, y in positions]
+    
+    @staticmethod
+    def draw_rounded_rectangle(draw: ImageDraw, bbox: Tuple[int, int, int, int], 
+                             radius: int, fill: str = 'black') -> None:
+        """Draw a rounded rectangle"""
+        x1, y1, x2, y2 = bbox
+        
+        # Draw main rectangle body
+        draw.rectangle([x1 + radius, y1, x2 - radius, y2], fill=fill)
+        draw.rectangle([x1, y1 + radius, x2, y2 - radius], fill=fill)
+        
+        # Draw rounded corners
+        draw.pieslice([x1, y1, x1 + 2*radius, y1 + 2*radius], 180, 270, fill=fill)
+        draw.pieslice([x2 - 2*radius, y1, x2, y1 + 2*radius], 270, 360, fill=fill)
+        draw.pieslice([x1, y2 - 2*radius, x1 + 2*radius, y2], 90, 180, fill=fill)
+        draw.pieslice([x2 - 2*radius, y2 - 2*radius, x2, y2], 0, 90, fill=fill)
+    
+    @staticmethod
+    def draw_circle(draw: ImageDraw, bbox: Tuple[int, int, int, int], 
+                   fill: str = 'black') -> None:
+        """Draw a circle/ellipse"""
+        draw.ellipse(bbox, fill=fill)
+    
+    @classmethod
+    def style_eyes(cls, img: Image.Image, modules: list, eye_style: str = 'square',
+                  fill_color: str = 'black', back_color: str = 'white',
+                  box_size: int = 10, border: int = 4) -> Image.Image:
+        """Apply custom styling to the finder patterns (eyes)"""
+        
+        if eye_style == 'square':
+            return img  # No changes needed
+            
+        eye_positions = cls.find_finder_patterns(modules)
+        if not eye_positions:
+            return img
+        
+        # Create a copy to work with
+        styled_img = img.copy()
+        draw = ImageDraw.Draw(styled_img)
+        
+        # Calculate border in pixels
+        border_px = border * box_size
+        
+        for eye_x, eye_y, eye_size in eye_positions:
+            # Convert module coordinates to pixel coordinates
+            px_x = border_px + eye_x * box_size
+            px_y = border_px + eye_y * box_size
+            px_size = eye_size * box_size
+            
+            # Clear the existing eye area
+            draw.rectangle([px_x, px_y, px_x + px_size, px_y + px_size], fill=back_color)
+            
+            if eye_style == 'rounded':
+                # Draw outer rounded square
+                cls.draw_rounded_rectangle(
+                    draw, 
+                    (px_x, px_y, px_x + px_size, px_y + px_size),
+                    radius=box_size,
+                    fill=fill_color
+                )
+                
+                # Draw inner white rounded square
+                inner_margin = box_size
+                cls.draw_rounded_rectangle(
+                    draw,
+                    (px_x + inner_margin, px_y + inner_margin, 
+                     px_x + px_size - inner_margin, px_y + px_size - inner_margin),
+                    radius=box_size // 2,
+                    fill=back_color
+                )
+                
+                # Draw center rounded square
+                center_margin = 2 * box_size
+                cls.draw_rounded_rectangle(
+                    draw,
+                    (px_x + center_margin, px_y + center_margin,
+                     px_x + px_size - center_margin, px_y + px_size - center_margin),
+                    radius=box_size // 3,
+                    fill=fill_color
+                )
+                
+            elif eye_style == 'circle':
+                # Draw outer circle
+                cls.draw_circle(
+                    draw,
+                    (px_x, px_y, px_x + px_size, px_y + px_size),
+                    fill=fill_color
+                )
+                
+                # Draw inner white circle
+                inner_margin = box_size
+                cls.draw_circle(
+                    draw,
+                    (px_x + inner_margin, px_y + inner_margin,
+                     px_x + px_size - inner_margin, px_y + px_size - inner_margin),
+                    fill=back_color
+                )
+                
+                # Draw center circle
+                center_margin = 2 * box_size
+                cls.draw_circle(
+                    draw,
+                    (px_x + center_margin, px_y + center_margin,
+                     px_x + px_size - center_margin, px_y + px_size - center_margin),
+                    fill=fill_color
+                )
+        
+        return styled_img
 
 class QRStyleOptions:
     """Available QR code styling options"""
@@ -266,6 +382,20 @@ class QRGenerator:
             make_image_args['eye_drawer'] = eye_drawer
             
         img = qr.make_image(**make_image_args)
+        
+        # Apply custom eye styling if requested
+        eye_style = settings.get('eye_drawer', 'square')
+        if eye_style in ['rounded', 'circle']:
+            logger.info(f"Applying custom eye styling: {eye_style}")
+            img = CustomEyeStyler.style_eyes(
+                img=img,
+                modules=qr.modules,
+                eye_style=eye_style,
+                fill_color=settings.get('fill_color', '#000000'),
+                back_color=settings.get('back_color', '#FFFFFF'),
+                box_size=settings.get('box_size', 10),
+                border=settings.get('border', 4)
+            )
         
         return img
     
