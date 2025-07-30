@@ -170,19 +170,32 @@ class QRGenerator:
         """Create a styled QR code image based on settings"""
         
         logger.info(f"Creating styled image with settings: {settings}")
+        logger.info(f"Available module drawers: {list(self.style_options.MODULE_DRAWERS.keys())}")
+        logger.info(f"Available eye drawers: {list(self.style_options.EYE_DRAWERS.keys())}")
         
         # Get module drawer (data dots)
+        module_drawer_name = settings.get('module_drawer', 'square')
+        logger.info(f"Requested module drawer: {module_drawer_name}")
+        
         module_drawer = self.style_options.MODULE_DRAWERS.get(
-            settings['module_drawer'], 
+            module_drawer_name, 
             self.style_options.MODULE_DRAWERS['square']
         )
+        logger.info(f"Selected module drawer: {type(module_drawer).__name__}")
         
         # Get eye drawer (corner patterns)
         eye_drawer_name = settings.get('eye_drawer', 'square')
+        logger.info(f"Requested eye drawer: {eye_drawer_name}")
+        
         eye_drawer = self.style_options.EYE_DRAWERS.get(eye_drawer_name)
         if eye_drawer is None and self.style_options.EYE_DRAWERS:
             # Fallback to first available eye drawer
             eye_drawer = list(self.style_options.EYE_DRAWERS.values())[0]
+            logger.info(f"Using fallback eye drawer: {type(eye_drawer).__name__ if eye_drawer else 'None'}")
+        elif eye_drawer:
+            logger.info(f"Selected eye drawer: {type(eye_drawer).__name__}")
+        else:
+            logger.info("No eye drawer available")
         
         # Create color mask
         color_mask_class = self.style_options.COLOR_MASKS.get(
