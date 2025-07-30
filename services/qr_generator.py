@@ -17,11 +17,17 @@ from qrcode.image.styles.colormasks import (
     RadialGradiantColorMask,
     SquareGradiantColorMask
 )
-from qrcode.image.styles.eyedrawers import (
-    SquareEyeDrawer,
-    CircleEyeDrawer,
-    RoundedEyeDrawer
-)
+try:
+    from qrcode.image.styles.eyedrawers import (
+        SquareEyeDrawer,
+        CircleEyeDrawer,
+        RoundedEyeDrawer
+    )
+except ImportError:
+    # Fallback for older qrcode versions
+    SquareEyeDrawer = None
+    CircleEyeDrawer = None
+    RoundedEyeDrawer = None
 from PIL import Image, ImageDraw
 import io
 import base64
@@ -47,11 +53,13 @@ class QRStyleOptions:
     }
     
     # Eye drawer types (corner patterns)
-    EYE_DRAWERS = {
-        'square': SquareEyeDrawer(),
-        'circle': CircleEyeDrawer(),
-        'rounded': RoundedEyeDrawer()
-    }
+    EYE_DRAWERS = {}
+    if SquareEyeDrawer:
+        EYE_DRAWERS['square'] = SquareEyeDrawer()
+    if CircleEyeDrawer:
+        EYE_DRAWERS['circle'] = CircleEyeDrawer()
+    if RoundedEyeDrawer:
+        EYE_DRAWERS['rounded'] = RoundedEyeDrawer()
     
     # Color mask types
     COLOR_MASKS = {
@@ -170,10 +178,11 @@ class QRGenerator:
         )
         
         # Get eye drawer (corner patterns)
-        eye_drawer = self.style_options.EYE_DRAWERS.get(
-            settings.get('eye_drawer', 'square'),
-            self.style_options.EYE_DRAWERS['square']
-        )
+        eye_drawer_name = settings.get('eye_drawer', 'square')
+        eye_drawer = self.style_options.EYE_DRAWERS.get(eye_drawer_name)
+        if eye_drawer is None and self.style_options.EYE_DRAWERS:
+            # Fallback to first available eye drawer
+            eye_drawer = list(self.style_options.EYE_DRAWERS.values())[0]
         
         # Create color mask
         color_mask_class = self.style_options.COLOR_MASKS.get(
@@ -216,12 +225,17 @@ class QRGenerator:
             )
         
         # Generate styled image
-        img = qr.make_image(
-            image_factory=StyledPilImage,
-            module_drawer=module_drawer,
-            eye_drawer=eye_drawer,
-            color_mask=color_mask
-        )
+        make_image_args = {
+            'image_factory': StyledPilImage,
+            'module_drawer': module_drawer,
+            'color_mask': color_mask
+        }
+        
+        # Only add eye_drawer if available
+        if eye_drawer is not None:
+            make_image_args['eye_drawer'] = eye_drawer
+            
+        img = qr.make_image(**make_image_args)
         
         return img
     

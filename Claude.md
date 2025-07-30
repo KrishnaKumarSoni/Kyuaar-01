@@ -35,15 +35,38 @@ Updates: Customers can re-scan to edit redirect if needed (admin-configurable).
 
 * User Journey (Customer's Voice): "Bought 25 QR stickers from Kyuaar offline. Admin had already generated QRs externally with the base URL and uploaded them. I scanned one QR to set my WhatsApp on my phone – simple form. Now, ALL 25 QRs redirect to my WhatsApp when customers scan them from my shop. Dashboard shows packet is configured!"
 
-CLARIFICATION: Admin generates and uploads QR images (not customer). Customer only configures where the QRs redirect to.
+CLARIFICATION: Admin can EITHER generate QRs in-app OR upload externally generated QR images. Customer only configures where the QRs redirect to.
 * Business Model: Sell packets offline. Track sales, pricing, and revenue in admin dashboard for simple business operations.
+
+QR Code Generation System
+Kyuaar includes a built-in QR code generator accessible via the "Generate QR" navigation menu item.
+
+* Custom QR Generator: Dedicated page at /qr/generate with comprehensive styling options
+* Live Preview: Real-time preview updates as settings change (debounced for performance)
+* Style Customization:
+  - Data Dot Shapes: Square, Rounded, Circle, Vertical Bars, Horizontal Bars
+  - Corner/Eye Patterns: Square, Circle, Rounded (independent from data dots)
+  - Color Options: Solid colors, Radial gradients, Square gradients
+  - Size Controls: Module size (5-20px), Border width (1-10 modules)
+* Style Presets: Quick-apply presets (Default, Rounded, Circular, Gradient styles, Bars)
+* URL Input: Custom URL or auto-populate from existing packet base URLs
+* Firebase Integration: Generated QRs automatically saved to Firebase Storage with metadata
+* Download Options: PNG download, Copy to clipboard functionality
+* Backend: Python qrcode[pil] library with StyledPilImage for advanced customization
+* API Endpoints:
+  - /api/qr/generate: Generate QR with custom settings
+  - /api/qr/save: Save generated QR to Firebase
+  - /api/qr/presets: Get available style presets
+  - /api/qr/packet/<id>: List QRs generated for specific packet
+* Database: QR metadata stored in Firestore 'qr_codes' collection with packet links, URLs, settings, and creation timestamps
 
 Tech Stack Requirements
 
 * Backend: Python Flask for API, routing, DB management.
 * Frontend: HTML, CSS, JS. Use shadcn/ui core components ONLY (integrate via CDN like unpkg.com/shadcn-ui for buttons, cards, selects, tables – no custom hardcoded components). Use Phosphor icons where required. Do not hardcode design CSS manually ever; always use off-the-shelf shadcn/ui components and their built-in theming options.
 * Database: Firebase Firestore. Store packet data including unique ID, base URL, QR count, uploaded image URLs (in Firebase Storage), redirect config, states (setup/config), sale details (buyer name, price, date sold), and scan logs.
-* Image Handling: Use Firebase Storage for uploading and serving QR images. No in-app QR generation; handle file uploads via Flask forms and Firebase SDK.
+* Image Handling: Use Firebase Storage for uploading and serving QR images. BOTH external QR upload AND in-app QR generation are supported via Flask forms and Firebase SDK.
+* QR Code Generation: Built-in custom QR generator with Python qrcode library supporting style customization (shapes, colors, gradients, corner patterns). Generated QRs saved to Firebase with metadata linking to URLs and packets.
 * Deployment: Vercel (serverless Flask). GitHub repo: Kyuaar-01, pushed via CLI.
 * Theme: Dark mode by default, with burnt orange primary accents (#CC5500) via CSS variables and shadcn/ui theming (e.g., set primary color in shadcn config and apply dark mode classes).
 * Other: Flask-Login for admin auth, gunicorn for serving.
@@ -58,6 +81,7 @@ Secure dashboard at /admin (login-protected) for business operations. Use shadcn
 
 Create: Form for QR count (1-100), optional pricing (set base price per packet or per QR). Auto-generate unique ID and base URL. Set initial state: Setup Pending. Optionally mark as sold immediately (for quick offline sales).
 Upload QR: Select packet from list, upload image. Validate (e.g., file type, size < 5MB). Update to Setup Done. Show preview in dashboard.
+Generate QR: Use built-in QR generator (accessible via "Generate QR" menu) to create custom styled QR codes for packets or any URL. Generated QRs auto-saved to Firebase with metadata.
 Mark as Sold: For Setup Done packets, button/form to mark sold: Enter buyer name/email, sale price (default from creation or editable), date. Update state to Configuration Pending. Log for revenue tracking.
 List/Edit: Table of packets with columns: ID, Base URL, QR Count, State (Setup Pending/Done, Config Pending/Done), Sale Price, Buyer, Redirect URL, Uploaded Image Preview. Actions: Edit details, reset states/redirects, delete.
 
@@ -68,7 +92,7 @@ PRICING CONFIG IS SIMPLE: Set how much we'll sell this packet for. That's it. Du
 Revenue Tracking: Dashboard section with total revenue, sales history table (packet ID, buyer, price, date), basic charts (use simple JS like Chart.js via CDN for monthly earnings).
 Minimal Business Flows:
 
-Offline Sale Flow: Create packet → Upload QR → Mark as Sold (enter details) → Email buyer instructions (auto-generate with base URL for their reference, even though QR is pre-uploaded).
+Offline Sale Flow: Create packet → Upload QR OR Generate QR (via built-in generator) → Mark as Sold (enter details) → Email buyer instructions (auto-generate with base URL for their reference).
 Fulfillment: Button to generate shipping label or email PDF instructions (no actual PDFs since QRs are external).
 Refunds/Returns: Simple button to mark packet as returned, adjust revenue.
 
