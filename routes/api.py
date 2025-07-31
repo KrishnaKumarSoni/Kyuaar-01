@@ -470,14 +470,7 @@ def save_qr_code():
         image_url = qr_generator.save_to_firebase(image_data, filename, packet_id, settings)
         
         if not image_url:
-            # If Firebase save fails, still return success with the base64 image
-            logger.warning("Firebase save failed, returning base64 image instead")
-            return jsonify({
-                'message': 'QR code generated successfully (Firebase save failed)',
-                'image_url': f"data:image/png;base64,{image_base64}",
-                'packet_id': packet_id,
-                'warning': 'Image not saved to permanent storage'
-            })
+            return jsonify({'error': 'Failed to save image to Firebase'}), 500
         
         # Save record to Firestore (only if packet_id is provided)
         if packet_id:

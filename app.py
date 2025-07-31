@@ -36,6 +36,7 @@ try:
     # Use service account from environment or file
     if os.environ.get('FIREBASE_CREDENTIALS'):
         import json
+        logger.info("Using Firebase credentials from environment variable")
         cred_dict = json.loads(os.environ.get('FIREBASE_CREDENTIALS'))
         cred = credentials.Certificate(cred_dict)
     else:
@@ -43,24 +44,32 @@ try:
         cred_file = 'kyuaar-01-firebase-adminsdk-fbsvc-6ffa60ee84.json'
         if os.path.exists(cred_file):
             cred = credentials.Certificate(cred_file)
-            logger.info(f"Using credentials from: {cred_file}")
+            logger.info(f"Using credentials from file: {cred_file}")
         else:
             # Fallback to the original name
             cred = credentials.Certificate('firebase-credentials.json')
+            logger.info("Using fallback credentials file")
     
-    firebase_admin.initialize_app(cred, {
-        'storageBucket': os.environ.get('FIREBASE_STORAGE_BUCKET', 'kyuaar-packets.appspot.com')
-    })
+    # Initialize Firebase app if not already initialized
+    if not firebase_admin._apps:
+        firebase_admin.initialize_app(cred, {
+            'storageBucket': os.environ.get('FIREBASE_STORAGE_BUCKET', 'kyuaar-packets.appspot.com')
+        })
+        logger.info("Firebase app initialized")
+    else:
+        logger.info("Firebase app already initialized")
     
-    # Initialize Firestore client
+    # Initialize Firestore client and storage bucket
     db = firestore.client()
     bucket = storage.bucket()
-    logger.info("Firebase initialized successfully")
+    logger.info("Firebase clients initialized successfully")
     
 except Exception as e:
     logger.error(f"Failed to initialize Firebase: {e}")
+    logger.error(f"Firebase environment variable present: {bool(os.environ.get('FIREBASE_CREDENTIALS'))}")
     db = None
     bucket = None
+    # Don't raise - allow app to continue without Firebase
 
 # Initialize Flask-Login
 login_manager = LoginManager()

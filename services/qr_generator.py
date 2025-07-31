@@ -427,10 +427,15 @@ class QRGenerator:
         try:
             # Check if Firebase is initialized
             if not firebase_admin._apps:
-                logger.error("Firebase admin not initialized")
+                logger.error("Firebase admin not initialized - no apps available")
                 return None
-                
-            bucket = storage.bucket()
+            
+            try:
+                bucket = storage.bucket()
+                logger.info("Successfully got Firebase storage bucket")
+            except Exception as bucket_error:
+                logger.error(f"Failed to get Firebase storage bucket: {bucket_error}")
+                return None
             folder = packet_id if packet_id else "standalone"
             blob_path = f"qr_codes/{folder}/{filename}"
             blob = bucket.blob(blob_path)
