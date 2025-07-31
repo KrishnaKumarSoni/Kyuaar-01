@@ -431,10 +431,18 @@ class QRGenerator:
                 return None
             
             try:
+                # Get the default app to check its configuration
+                default_app = firebase_admin.get_app()
+                app_options = getattr(default_app, 'options', None)
+                if app_options and hasattr(app_options, 'get'):
+                    storage_bucket = app_options.get('storageBucket')
+                    logger.info(f"App storage bucket config: {repr(storage_bucket)}")
+                
                 bucket = storage.bucket()
-                logger.info("Successfully got Firebase storage bucket")
+                logger.info(f"Successfully got Firebase storage bucket: {bucket.name}")
             except Exception as bucket_error:
                 logger.error(f"Failed to get Firebase storage bucket: {bucket_error}")
+                logger.error(f"Error type: {type(bucket_error).__name__}")
                 return None
             folder = packet_id if packet_id else "standalone"
             blob_path = f"qr_codes/{folder}/{filename}"

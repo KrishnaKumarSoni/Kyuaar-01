@@ -5,12 +5,15 @@ Tests Flask-Login authentication, registration, and user management
 
 import pytest
 import json
-from datetime import datetime, timezone
+import jwt
+from datetime import datetime, timezone, timedelta
 from unittest.mock import Mock, patch, MagicMock
 from werkzeug.security import generate_password_hash
 from flask_login import current_user
+from flask import request
 
 from models.user import User
+from routes.auth import generate_token, verify_token, token_required
 
 
 class TestJWTFunctions:
@@ -66,64 +69,69 @@ class TestJWTFunctions:
             
             assert payload is None
     
-    def test_token_required_decorator_valid_token(self, app, client):
+    def test_token_required_decorator_valid_token(self, app):
         """Test token_required decorator with valid token"""
         with app.app_context():
             token = generate_token('test-user-123')
             
-            # Mock a protected route
-            @app.route('/test-protected')
+            # Test the decorator directly
             @token_required
-            def test_route():
+            def test_function():
                 return json.dumps({'message': 'success', 'user_id': request.user_id})
             
-            response = client.get('/test-protected', headers={
-                'Authorization': f'Bearer {token}'
-            })
-            
-            assert response.status_code == 200
+            # Mock request with valid token
+            with app.test_request_context(headers={'Authorization': f'Bearer {token}'}):
+                result = test_function()
+                data = json.loads(result)
+                assert data['message'] == 'success'
+                assert data['user_id'] == 'test-user-123'
     
-    def test_token_required_decorator_no_token(self, app, client):
+    def test_token_required_decorator_no_token(self, app):
         """Test token_required decorator without token"""
         with app.app_context():
-            # Mock a protected route
-            @app.route('/test-protected-no-token')
             @token_required
-            def test_route():
+            def test_function():
                 return json.dumps({'message': 'success'})
             
-            response = client.get('/test-protected-no-token')
-            
-            assert response.status_code == 401
-            data = json.loads(response.data)
-            assert 'Token missing' in data['error']
+            # Mock request without token
+            with app.test_request_context():
+                result = test_function()
+                # The decorator returns a Flask response tuple
+                assert isinstance(result, tuple)
+                response_data, status_code = result
+                assert status_code == 401
+                if hasattr(response_data, 'data'):
+                    data = json.loads(response_data.data)
+                else:
+                    data = json.loads(response_data)
+                assert 'Token missing' in data['error']
 
 
 class TestAuthEndpoints:
     """Test authentication API endpoints"""
     
-    @patch('routes.auth.firestore.client')
-    def test_register_success(self, mock_firestore, client, app):
+    @patch('firebase_admin.firestore.client')
+    @patch('models.user.User.get_by_email')
+    @patch('models.user.User.create')
+    def test_register_success(self, mock_user_create, mock_get_by_email, mock_firestore, client, app):
         """Test successful user registration"""
-        # Mock Firestore operations
-        mock_db = Mock()
-        mock_firestore.return_value = mock_db
-        
-        mock_collection = Mock()
-        mock_db.collection.return_value = mock_collection
-        
-        # Mock user doesn't exist
-        mock_collection.where.return_value.limit.return_value.get.return_value = []
+        # Mock User.get_by_email to return None (user doesn't exist)
+        mock_get_by_email.return_value = None
         
         # Mock user creation
-        mock_ref = Mock()
-        mock_ref.id = 'new-user-123'
-        mock_collection.add.return_value = (None, mock_ref)
+        mock_user = Mock()
+        mock_user.id = 'new-user-123'
+        mock_user.to_dict.return_value = {
+            'id': 'new-user-123',
+            'email': 'test@example.com',
+            'name': 'Test User'
+        }
+        mock_user_create.return_value = mock_user
         
         with app.app_context():
-            response = client.post('/api/auth/register', 
+            response = client.post('/auth/api/register', 
                 json={
-                    'username': 'testuser',
+                    'name': 'Test User',
                     'email': 'test@example.com',
                     'password': 'password123'
                 })
@@ -131,14 +139,14 @@ class TestAuthEndpoints:
             assert response.status_code == 201
             data = json.loads(response.data)
             assert 'token' in data
-            assert data['user']['username'] == 'testuser'
             assert data['user']['email'] == 'test@example.com'
+            assert data['user']['name'] == 'Test User'
     
     def test_register_missing_fields(self, client):
         """Test registration with missing required fields"""
-        response = client.post('/api/auth/register', 
+        response = client.post('/auth/api/register', 
             json={
-                'username': 'testuser'
+                'name': 'testuser'
                 # missing email and password
             })
         
@@ -148,9 +156,9 @@ class TestAuthEndpoints:
     
     def test_register_short_password(self, client):
         """Test registration with password too short"""
-        response = client.post('/api/auth/register', 
+        response = client.post('/auth/api/register', 
             json={
-                'username': 'testuser',
+                'name': 'testuser',
                 'email': 'test@example.com',
                 'password': '123'  # too short
             })
@@ -159,23 +167,16 @@ class TestAuthEndpoints:
         data = json.loads(response.data)
         assert 'at least 8 characters' in data['error']
     
-    @patch('routes.auth.firestore.client')
-    def test_register_user_exists(self, mock_firestore, client):
+    @patch('models.user.User.get_by_email')
+    def test_register_user_exists(self, mock_get_by_email, client):
         """Test registration when user already exists"""
-        # Mock Firestore operations
-        mock_db = Mock()
-        mock_firestore.return_value = mock_db
-        
-        mock_collection = Mock()
-        mock_db.collection.return_value = mock_collection
-        
         # Mock user exists
-        mock_user_doc = Mock()
-        mock_collection.where.return_value.limit.return_value.get.return_value = [mock_user_doc]
+        mock_existing_user = Mock()
+        mock_get_by_email.return_value = mock_existing_user
         
-        response = client.post('/api/auth/register', 
+        response = client.post('/auth/api/register', 
             json={
-                'username': 'existing_user',
+                'name': 'existing_user',
                 'email': 'test@example.com',
                 'password': 'password123'
             })
@@ -184,67 +185,53 @@ class TestAuthEndpoints:
         data = json.loads(response.data)
         assert 'already exists' in data['error']
     
-    @patch('routes.auth.firestore.client')
-    def test_login_success(self, mock_firestore, client, app):
+    @patch('models.user.User.get_by_email')
+    def test_login_success(self, mock_get_by_email, client, app):
         """Test successful user login"""
-        # Mock Firestore operations
-        mock_db = Mock()
-        mock_firestore.return_value = mock_db
-        
-        mock_collection = Mock()
-        mock_db.collection.return_value = mock_collection
-        
         # Mock user found
-        mock_user_doc = Mock()
-        mock_user_doc.id = 'user-123'
-        mock_user_doc.to_dict.return_value = {
-            'username': 'testuser',
+        mock_user = Mock()
+        mock_user.id = 'user-123'
+        mock_user.check_password.return_value = True
+        mock_user.update_last_login = Mock()
+        mock_user.to_dict.return_value = {
+            'id': 'user-123',
             'email': 'test@example.com',
-            'password_hash': generate_password_hash('password123')
+            'name': 'Test User'
         }
-        mock_user_doc.reference.update = Mock()
-        
-        mock_collection.where.return_value.limit.return_value.get.return_value = [mock_user_doc]
+        mock_get_by_email.return_value = mock_user
         
         with app.app_context():
-            response = client.post('/api/auth/login', 
+            response = client.post('/auth/api/login', 
                 json={
-                    'username': 'testuser',
+                    'email': 'test@example.com',
                     'password': 'password123'
                 })
             
             assert response.status_code == 200
             data = json.loads(response.data)
             assert 'token' in data
-            assert data['user']['username'] == 'testuser'
+            assert data['user']['email'] == 'test@example.com'
             
             # Verify last_login was updated
-            mock_user_doc.reference.update.assert_called_once()
+            mock_user.update_last_login.assert_called_once()
     
     def test_login_missing_fields(self, client):
         """Test login with missing credentials"""
-        response = client.post('/api/auth/login', json={'username': 'testuser'})
+        response = client.post('/auth/api/login', json={'email': 'test@example.com'})
         
         assert response.status_code == 400
         data = json.loads(response.data)
         assert 'required' in data['error'].lower()
     
-    @patch('routes.auth.firestore.client')
-    def test_login_user_not_found(self, mock_firestore, client):
+    @patch('models.user.User.get_by_email')
+    def test_login_user_not_found(self, mock_get_by_email, client):
         """Test login with non-existent user"""
-        # Mock Firestore operations
-        mock_db = Mock()
-        mock_firestore.return_value = mock_db
-        
-        mock_collection = Mock()
-        mock_db.collection.return_value = mock_collection
-        
         # Mock user not found
-        mock_collection.where.return_value.limit.return_value.get.return_value = []
+        mock_get_by_email.return_value = None
         
-        response = client.post('/api/auth/login', 
+        response = client.post('/auth/api/login', 
             json={
-                'username': 'nonexistent',
+                'email': 'nonexistent@example.com',
                 'password': 'password123'
             })
         
@@ -252,28 +239,17 @@ class TestAuthEndpoints:
         data = json.loads(response.data)
         assert 'Invalid credentials' in data['error']
     
-    @patch('routes.auth.firestore.client')
-    def test_login_wrong_password(self, mock_firestore, client):
+    @patch('models.user.User.get_by_email')
+    def test_login_wrong_password(self, mock_get_by_email, client):
         """Test login with incorrect password"""
-        # Mock Firestore operations
-        mock_db = Mock()
-        mock_firestore.return_value = mock_db
+        # Mock user found but wrong password
+        mock_user = Mock()
+        mock_user.check_password.return_value = False
+        mock_get_by_email.return_value = mock_user
         
-        mock_collection = Mock()
-        mock_db.collection.return_value = mock_collection
-        
-        # Mock user found
-        mock_user_doc = Mock()
-        mock_user_doc.to_dict.return_value = {
-            'username': 'testuser',
-            'password_hash': generate_password_hash('correct_password')
-        }
-        
-        mock_collection.where.return_value.limit.return_value.get.return_value = [mock_user_doc]
-        
-        response = client.post('/api/auth/login', 
+        response = client.post('/auth/api/login', 
             json={
-                'username': 'testuser',
+                'email': 'test@example.com',
                 'password': 'wrong_password'
             })
         
@@ -286,7 +262,7 @@ class TestAuthEndpoints:
         with app.app_context():
             token = generate_token('test-user-123')
             
-            response = client.post('/api/auth/logout', headers={
+            response = client.post('/auth/api/logout', headers={
                 'Authorization': f'Bearer {token}'
             })
             
@@ -296,30 +272,26 @@ class TestAuthEndpoints:
     
     def test_logout_no_token(self, client):
         """Test logout without token"""
-        response = client.post('/api/auth/logout')
+        response = client.post('/auth/api/logout')
         
         assert response.status_code == 401
     
-    @patch('routes.auth.firestore.client')
-    def test_verify_success(self, mock_firestore, client, app):
+    @patch('models.user.User.get_by_id')
+    def test_verify_success(self, mock_get_by_id, client, app):
         """Test successful token verification"""
-        # Mock Firestore operations
-        mock_db = Mock()
-        mock_firestore.return_value = mock_db
-        
-        mock_user_doc = Mock()
-        mock_user_doc.exists = True
-        mock_user_doc.to_dict.return_value = {
-            'username': 'testuser',
-            'email': 'test@example.com'
+        # Mock user
+        mock_user = Mock()
+        mock_user.to_dict.return_value = {
+            'id': 'test-user-123',
+            'email': 'test@example.com',
+            'name': 'Test User'
         }
-        
-        mock_db.collection.return_value.document.return_value.get.return_value = mock_user_doc
+        mock_get_by_id.return_value = mock_user
         
         with app.app_context():
             token = generate_token('test-user-123')
             
-            response = client.get('/api/auth/verify', headers={
+            response = client.get('/auth/api/verify', headers={
                 'Authorization': f'Bearer {token}'
             })
             
@@ -328,27 +300,27 @@ class TestAuthEndpoints:
             assert data['valid'] is True
             assert 'user' in data
     
-    @patch('routes.auth.firestore.client')
-    def test_change_password_success(self, mock_firestore, client, app):
+    @patch('models.user.User.get_by_id')
+    @patch('firebase_admin.firestore.client')
+    def test_change_password_success(self, mock_firestore, mock_get_by_id, client, app):
         """Test successful password change"""
-        # Mock Firestore operations
+        # Mock user
+        mock_user = Mock()
+        mock_user.check_password.return_value = True
+        mock_user.set_password = Mock()
+        mock_user.password_hash = 'new_hash'
+        mock_get_by_id.return_value = mock_user
+        
+        # Mock firestore update
         mock_db = Mock()
         mock_firestore.return_value = mock_db
-        
-        mock_user_doc = Mock()
-        mock_user_doc.exists = True
-        mock_user_doc.to_dict.return_value = {
-            'username': 'testuser',
-            'password_hash': generate_password_hash('old_password')
-        }
-        mock_user_doc.reference.update = Mock()
-        
-        mock_db.collection.return_value.document.return_value.get.return_value = mock_user_doc
+        mock_user_ref = Mock()
+        mock_db.collection.return_value.document.return_value = mock_user_ref
         
         with app.app_context():
             token = generate_token('test-user-123')
             
-            response = client.post('/api/auth/change-password', 
+            response = client.post('/auth/api/change-password', 
                 headers={'Authorization': f'Bearer {token}'},
                 json={
                     'old_password': 'old_password',
@@ -360,7 +332,8 @@ class TestAuthEndpoints:
             assert 'successful' in data['message']
             
             # Verify password was updated
-            mock_user_doc.reference.update.assert_called_once()
+            mock_user.set_password.assert_called_once_with('new_password123')
+            mock_user_ref.update.assert_called_once()
 
 
 class TestAuthSecurity:
@@ -396,25 +369,25 @@ class TestAuthSecurity:
             # Should be approximately 24 hours (with some tolerance)
             assert timedelta(hours=23, minutes=50) <= time_diff <= timedelta(hours=24, minutes=10)
     
-    def test_token_bearer_format(self, client, app):
+    def test_token_bearer_format(self, app):
         """Test that bearer token format is handled correctly"""
         with app.app_context():
             token = generate_token('test-user-123')
             
-            # Mock a protected route for testing
-            @app.route('/test-bearer')
             @token_required
-            def test_route():
-                return json.dumps({'success': True})
+            def test_function():
+                return json.dumps({'success': True, 'user_id': request.user_id})
             
             # Test with Bearer prefix
-            response = client.get('/test-bearer', headers={
-                'Authorization': f'Bearer {token}'
-            })
-            assert response.status_code == 200
+            with app.test_request_context(headers={'Authorization': f'Bearer {token}'}):
+                result = test_function()
+                data = json.loads(result)
+                assert data['success'] is True
+                assert data['user_id'] == 'test-user-123'
             
-            # Test without Bearer prefix (should also work)
-            response = client.get('/test-bearer', headers={
-                'Authorization': token
-            })
-            assert response.status_code == 200
+            # Test without Bearer prefix (should also work based on decorator logic)
+            with app.test_request_context(headers={'Authorization': token}):
+                result = test_function()
+                data = json.loads(result)
+                assert data['success'] is True
+                assert data['user_id'] == 'test-user-123'

@@ -69,6 +69,7 @@ class TestUserModel:
         assert user.check_password('wrongpassword') is False
     
     @patch('firebase_admin.firestore.client')
+    @patch('firebase_admin._apps', {'test-app': Mock()})
     def test_get_by_email_found(self, mock_firestore):
         """Test getting user by email when user exists"""
         # Mock Firestore operations
@@ -102,6 +103,7 @@ class TestUserModel:
         assert user.name == 'Test User'
     
     @patch('firebase_admin.firestore.client')
+    @patch('firebase_admin._apps', {'test-app': Mock()})
     def test_get_by_email_not_found(self, mock_firestore):
         """Test getting user by email when user doesn't exist"""
         # Mock Firestore operations
@@ -121,6 +123,7 @@ class TestUserModel:
         assert user is None
     
     @patch('firebase_admin.firestore.client')
+    @patch('firebase_admin._apps', {'test-app': Mock()})
     def test_create_user_success(self, mock_firestore):
         """Test creating new user successfully"""
         # Mock Firestore operations
@@ -155,6 +158,7 @@ class TestUserModel:
         assert user.check_password('password123') is True
     
     @patch('firebase_admin.firestore.client')
+    @patch('firebase_admin._apps', {'test-app': Mock()})
     def test_create_user_duplicate(self, mock_firestore):
         """Test creating user that already exists"""
         existing_user = User(
@@ -196,29 +200,41 @@ class TestAuthRoutes:
     """Test authentication route endpoints"""
     
     def test_login_get(self, client):
-        """Test GET request to login page"""
-        response = client.get('/api/auth/login')
+        """Test GET request to login page (Flask-Login web route)"""
+        response = client.get('/auth/login')
         assert response.status_code in [200, 404]  # 404 if template doesn't exist yet
     
     @patch.object(User, 'get_by_email')
-    def test_login_post_success(self, mock_get_user, client, app):
-        """Test successful login"""
+    @patch('routes.auth.generate_token')
+    def test_login_post_success(self, mock_generate_token, mock_get_user, client, app):
+        """Test successful API login"""
         # Mock user
         mock_user = Mock()
         mock_user.check_password.return_value = True
         mock_user.id = 'user-123'
         mock_user.email = 'test@example.com'
         mock_user.name = 'Test User'
+        mock_user.to_dict.return_value = {
+            'id': 'user-123',
+            'email': 'test@example.com',
+            'name': 'Test User',
+            'role': 'admin'
+        }
+        mock_user.update_last_login.return_value = None
         mock_get_user.return_value = mock_user
+        mock_generate_token.return_value = 'fake-jwt-token'
         
-        with app.test_request_context():
-            response = client.post('/api/auth/login', data={
-                'email': 'test@example.com',
-                'password': 'password123'
-            }, follow_redirects=True)
-            
-            # Should redirect to dashboard or return success
-            assert response.status_code in [200, 302]
+        response = client.post('/auth/api/login', json={
+            'email': 'test@example.com',
+            'password': 'password123'
+        })
+        
+        # API should return 200 with JSON response
+        assert response.status_code == 200
+        data = json.loads(response.data)
+        assert data['message'] == 'Login successful'
+        assert 'token' in data
+        assert 'user' in data
     
     @patch.object(User, 'get_by_email')
     def test_login_post_invalid_credentials(self, mock_get_user, client):
@@ -226,31 +242,37 @@ class TestAuthRoutes:
         # Mock user not found
         mock_get_user.return_value = None
         
-        response = client.post('/api/auth/login', data={
+        response = client.post('/auth/api/login', json={
             'email': 'invalid@example.com',
             'password': 'wrongpassword'
         })
         
-        # Should return to login page with error
-        assert response.status_code in [200, 302]
+        # API should return 401 for invalid credentials
+        assert response.status_code == 401
+        data = json.loads(response.data)
+        assert 'error' in data
     
     def test_login_post_missing_data(self, client):
         """Test login with missing email or password"""
-        response = client.post('/api/auth/login', data={
+        response = client.post('/auth/api/login', json={
             'email': 'test@example.com'
             # missing password
         })
         
-        assert response.status_code in [200, 400]
+        assert response.status_code == 400
+        data = json.loads(response.data)
+        assert 'error' in data
     
-    def test_register_get(self, client):
-        """Test GET request to register page"""
-        response = client.get('/api/auth/register')
-        assert response.status_code in [200, 404]  # 404 if template doesn't exist yet
+    def test_register_get_not_allowed(self, client):
+        """Test GET request to register API endpoint (should fail)"""
+        response = client.get('/auth/api/register')
+        assert response.status_code == 405  # Method Not Allowed
     
     @patch.object(User, 'get_by_email')
     @patch.object(User, 'create')
-    def test_register_post_success(self, mock_create, mock_get_user, client, app):
+    @patch('routes.auth.generate_token')
+    @patch('firebase_admin._apps', {'test': Mock()})
+    def test_register_post_success(self, mock_generate_token, mock_create, mock_get_user, client, app):
         """Test successful user registration"""
         # Mock no existing user
         mock_get_user.return_value = None
@@ -260,79 +282,88 @@ class TestAuthRoutes:
         mock_user.id = 'new-user-123'
         mock_user.email = 'new@example.com'
         mock_user.name = 'New User'
+        mock_user.to_dict.return_value = {
+            'id': 'new-user-123',
+            'email': 'new@example.com',
+            'name': 'New User',
+            'role': 'admin'
+        }
         mock_create.return_value = mock_user
+        mock_generate_token.return_value = 'fake-jwt-token'
         
-        with app.test_request_context():
-            response = client.post('/api/auth/register', data={
-                'name': 'New User',
-                'email': 'new@example.com',
-                'password': 'password123',
-                'confirm_password': 'password123'
-            }, follow_redirects=True)
-            
-            # Should redirect to dashboard
-            assert response.status_code in [200, 302]
+        response = client.post('/auth/api/register', json={
+            'name': 'New User',
+            'email': 'new@example.com',
+            'password': 'password123'
+        })
+        
+        # API should return 201 for successful registration
+        assert response.status_code == 201
+        data = json.loads(response.data)
+        assert data['message'] == 'Registration successful'
+        assert 'token' in data
+        assert 'user' in data
     
+    @patch('firebase_admin._apps', {'test': Mock()})
     def test_register_post_validation_errors(self, client):
         """Test registration with validation errors"""
         # Test missing name
-        response = client.post('/api/auth/register', data={
+        response = client.post('/auth/api/register', json={
             'email': 'test@example.com',
-            'password': 'password123',
-            'confirm_password': 'password123'
+            'password': 'password123'
         })
-        assert response.status_code in [200, 400]
-        
-        # Test password mismatch
-        response = client.post('/api/auth/register', data={
-            'name': 'Test User',
-            'email': 'test@example.com',
-            'password': 'password123',
-            'confirm_password': 'different'
-        })
-        assert response.status_code in [200, 400]
+        assert response.status_code == 400
+        data = json.loads(response.data)
+        assert 'error' in data
         
         # Test short password
-        response = client.post('/api/auth/register', data={
+        response = client.post('/auth/api/register', json={
             'name': 'Test User',
             'email': 'test@example.com',
-            'password': '123',
-            'confirm_password': '123'
+            'password': '123'
         })
-        assert response.status_code in [200, 400]
+        assert response.status_code == 400
+        data = json.loads(response.data)
+        assert 'error' in data
     
     @patch.object(User, 'get_by_email')
+    @patch('firebase_admin._apps', {'test': Mock()})
     def test_register_existing_user(self, mock_get_user, client):
         """Test registration with existing email"""
         # Mock existing user
         mock_user = Mock()
         mock_get_user.return_value = mock_user
         
-        response = client.post('/api/auth/register', data={
+        response = client.post('/auth/api/register', json={
             'name': 'Test User',
             'email': 'existing@example.com',
-            'password': 'password123',
-            'confirm_password': 'password123'
+            'password': 'password123'
         })
         
-        assert response.status_code in [200, 409]
+        assert response.status_code == 409
+        data = json.loads(response.data)
+        assert 'error' in data
     
-    def test_logout(self, client):
-        """Test user logout"""
-        # This would require setting up a logged-in user session
-        # For now, just test that the endpoint exists
-        response = client.get('/api/auth/logout')
-        assert response.status_code in [200, 302, 401]  # Various possible responses
+    def test_logout_get_flask_login(self, client):
+        """Test GET request to Flask-Login logout endpoint"""
+        # Without being logged in, should redirect to login
+        response = client.get('/auth/logout')
+        assert response.status_code in [302, 401]  # Redirect to login or unauthorized
+    
+    def test_logout_post_api_no_token(self, client):
+        """Test API logout without token"""
+        response = client.post('/auth/api/logout')
+        assert response.status_code == 401
+        data = json.loads(response.data)
+        assert 'error' in data
     
     def test_check_auth_not_authenticated(self, client):
         """Test authentication check when not logged in"""
-        response = client.get('/api/auth/check')
+        response = client.get('/auth/check')
         
-        if response.status_code == 200:
-            data = json.loads(response.data)
-            assert data['authenticated'] is False
-        else:
-            assert response.status_code == 401
+        assert response.status_code == 401
+        data = json.loads(response.data)
+        assert data['authenticated'] is False
 
 
 class TestAuthSecurity:

@@ -117,6 +117,12 @@ class Packet:
         """Get the simple sale price for this packet"""
         return self.price or 0.0
     
+    def calculate_price(self, price_per_qr: float = 33.0) -> float:
+        """Calculate price based on QR count and price per QR (default ₹33 per QR)"""
+        if self.price > 0:
+            return self.price
+        return self.qr_count * price_per_qr
+    
     def is_ready_for_sale(self) -> bool:
         """Check if packet is ready to be sold"""
         return self.state == PacketStates.SETUP_DONE

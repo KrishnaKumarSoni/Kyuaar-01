@@ -13,7 +13,6 @@
     }
   ],
   "env": {
-    "FLASK_ENV": "production",
-    "FIREBASE_STORAGE_BUCKET": "kyuaar-packets.appspot.com"
+    "FLASK_ENV": "production"
   }
 }
