@@ -425,8 +425,14 @@ class QRGenerator:
             Public URL of the saved image or None if failed
         """
         try:
+            # Check if Firebase is initialized
+            if not firebase_admin._apps:
+                logger.error("Firebase admin not initialized")
+                return None
+                
             bucket = storage.bucket()
-            blob_path = f"qr_codes/{packet_id}/{filename}"
+            folder = packet_id if packet_id else "standalone"
+            blob_path = f"qr_codes/{folder}/{filename}"
             blob = bucket.blob(blob_path)
             
             # Upload image
@@ -443,6 +449,7 @@ class QRGenerator:
             
         except Exception as e:
             logger.error(f"Error saving QR code to Firebase: {e}")
+            logger.error(f"Firebase apps available: {len(firebase_admin._apps)}")
             return None
     
     def save_qr_record_to_firestore(
@@ -467,6 +474,11 @@ class QRGenerator:
         try:
             from firebase_admin import firestore
             
+            # Check if Firebase is initialized
+            if not firebase_admin._apps:
+                logger.error("Firebase admin not initialized")
+                return False
+            
             db = firestore.client()
             
             qr_data = {
@@ -486,6 +498,7 @@ class QRGenerator:
             
         except Exception as e:
             logger.error(f"Error saving QR code record to Firestore: {e}")
+            logger.error(f"Firebase apps available: {len(firebase_admin._apps)}")
             return False
     
     def get_style_presets(self) -> Dict[str, Dict[str, Any]]:
