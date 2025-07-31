@@ -26,52 +26,30 @@ def list():
 @packets_bp.route('/create', methods=['GET', 'POST'])
 @login_required
 def create():
-    """Create a new packet with pricing and QR image upload"""
+    """Create a new packet with base URL generation"""
     if request.method == 'POST':
         try:
             qr_count = int(request.form.get('qr_count', 25))
-            price_per_scan = float(request.form.get('price_per_scan', 50))
-            redirect_url = request.form.get('redirect_url', '').strip()
+            sale_price = float(request.form.get('sale_price', 500))
             
             # Validate inputs
             if qr_count < 1 or qr_count > 100:
                 flash('QR count must be between 1 and 100', 'error')
                 return render_template('packets/create.html')
             
-            if price_per_scan < 1 or price_per_scan > 1000:
-                flash('Price per scan must be between ₹1 and ₹1000', 'error')
+            if sale_price < 0 or sale_price > 10000:
+                flash('Sale price must be between ₹0 and ₹10,000', 'error')
                 return render_template('packets/create.html')
             
-            if not redirect_url:
-                flash('Redirect URL is required', 'error')
-                return render_template('packets/create.html')
-            
-            # Check if QR image was uploaded
-            if 'qr_image' not in request.files or request.files['qr_image'].filename == '':
-                flash('QR code image is required', 'error')
-                return render_template('packets/create.html')
-            
-            # Calculate total price based on QR count
-            total_price = qr_count * price_per_scan
-            
-            # Create packet with pricing and default redirect
+            # Create packet with initial state: setup_pending
             packet = Packet.create(
                 user_id=current_user.id,
                 qr_count=qr_count,
-                price=total_price
+                price=sale_price
             )
             
             if packet:
-                # Set the default redirect URL
-                packet.redirect_url = redirect_url
-                packet.save()
-                
-                # TODO: Handle QR image upload here
-                # For now, mark setup as complete
-                packet.transition_to('setup_done')
-                packet.save()
-                
-                flash('Packet created successfully with pricing configuration!', 'success')
+                flash('Packet created successfully! Now upload QR images from the dashboard.', 'success')
                 return redirect(url_for('packets.view', packet_id=packet.id))
             else:
                 flash('Failed to create packet', 'error')
