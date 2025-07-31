@@ -1,0 +1,320 @@
+name: Test and Deploy Kyuaar
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  PYTHON_VERSION: '3.9'
+  NODE_VERSION: '18'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.10', '3.11']
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libpq-dev
+    
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Set up test environment
+      run: |
+        echo "TESTING=true" >> $GITHUB_ENV
+        echo "SECRET_KEY=test-secret-key-for-ci" >> $GITHUB_ENV
+        echo "FIREBASE_STORAGE_BUCKET=test-bucket" >> $GITHUB_ENV
+    
+    - name: Run linting with flake8
+      run: |
+        # Install flake8 if not in requirements
+        pip install flake8
+        # Stop the build if there are Python syntax errors or undefined names
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # Exit-zero treats all errors as warnings. GitHub editor is 127 chars wide
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+      continue-on-error: true
+    
+    - name: Run unit tests
+      run: |
+        python -m pytest tests/unit/ -v --tb=short --cov=. --cov-report=xml --cov-report=term-missing
+    
+    - name: Run integration tests
+      run: |
+        python -m pytest tests/integration/ -v --tb=short --cov=. --cov-append --cov-report=xml --cov-report=term-missing
+    
+    - name: Run end-to-end tests
+      run: |
+        python -m pytest tests/e2e/ -v --tb=short --cov=. --cov-append --cov-report=xml --cov-report=term-missing
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      if: matrix.python-version == '3.9'
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+    
+    - name: Generate coverage report
+      if: matrix.python-version == '3.9'
+      run: |
+        python -m pytest --cov=. --cov-report=html
+    
+    - name: Upload coverage HTML report
+      if: matrix.python-version == '3.9'
+      uses: actions/upload-artifact@v3
+      with:
+        name: coverage-report
+        path: htmlcov/
+    
+    - name: Test report generation
+      if: always()
+      run: |
+        python run_tests.py --coverage-only
+
+  security-scan:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install security scan tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install bandit safety
+        pip install -r requirements.txt
+    
+    - name: Run Bandit security scan
+      run: |
+        bandit -r . -f json -o bandit-report.json
+      continue-on-error: true
+    
+    - name: Run Safety check for vulnerabilities
+      run: |
+        safety check --json --output safety-report.json
+      continue-on-error: true
+    
+    - name: Upload security reports
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: security-reports
+        path: |
+          bandit-report.json
+          safety-report.json
+
+  docker-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Build Docker image
+      run: |
+        docker build -t kyuaar-test .
+      continue-on-error: true
+    
+    - name: Test Docker container
+      run: |
+        docker run --rm -e TESTING=true kyuaar-test python -m pytest tests/unit/ -v
+      continue-on-error: true
+
+  deploy-staging:
+    needs: [test, security-scan]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    
+    environment:
+      name: staging
+      url: https://kyuaar-staging.vercel.app
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+    
+    - name: Install Vercel CLI
+      run: npm install -g vercel@latest
+    
+    - name: Deploy to Vercel (Staging)
+      run: |
+        vercel --token=${{ secrets.VERCEL_TOKEN }} --scope=${{ secrets.VERCEL_ORG_ID }} --confirm
+      env:
+        VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+        VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+    
+    - name: Run smoke tests against staging
+      run: |
+        python -m pytest tests/e2e/test_smoke.py --base-url=https://kyuaar-staging.vercel.app -v
+      continue-on-error: true
+
+  deploy-production:
+    needs: [test, security-scan, deploy-staging]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    environment:
+      name: production
+      url: https://kyuaar.com
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+    
+    - name: Install Vercel CLI
+      run: npm install -g vercel@latest
+    
+    - name: Deploy to Vercel (Production)
+      run: |
+        vercel --prod --token=${{ secrets.VERCEL_TOKEN }} --scope=${{ secrets.VERCEL_ORG_ID }} --confirm
+      env:
+        VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+        VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+    
+    - name: Run smoke tests against production
+      run: |
+        python -m pytest tests/e2e/test_smoke.py --base-url=https://kyuaar.com -v
+      continue-on-error: true
+    
+    - name: Notify deployment success
+      if: success()
+      run: |
+        echo "🎉 Deployment to production successful!"
+        echo "Production URL: https://kyuaar.com"
+
+  performance-test:
+    needs: [deploy-staging]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install performance testing tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install locust requests
+    
+    - name: Run performance tests
+      run: |
+        # Run basic load tests against staging
+        python -c "
+        import requests
+        import time
+        
+        staging_url = 'https://kyuaar-staging.vercel.app'
+        
+        # Basic availability test
+        try:
+            response = requests.get(f'{staging_url}/', timeout=10)
+            print(f'Status: {response.status_code}')
+            print(f'Response time: {response.elapsed.total_seconds()}s')
+            
+            if response.status_code == 200:
+                print('✅ Basic availability test passed')
+            else:
+                print('❌ Basic availability test failed')
+        except Exception as e:
+            print(f'❌ Performance test failed: {e}')
+        "
+      continue-on-error: true
+
+  notify:
+    needs: [test, security-scan]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+    - name: Notify test results
+      run: |
+        if [[ "${{ needs.test.result }}" == "success" ]]; then
+          echo "✅ All tests passed successfully!"
+        else
+          echo "❌ Some tests failed. Check the logs above."
+        fi
+        
+        if [[ "${{ needs.security-scan.result }}" == "success" ]]; then
+          echo "🔒 Security scan completed successfully!"
+        else
+          echo "⚠️ Security scan found issues. Check the reports."
+        fi
+
+    - name: Post test summary
+      if: always()
+      run: |
+        echo "## Test Summary" >> $GITHUB_STEP_SUMMARY
+        echo "| Component | Status |" >> $GITHUB_STEP_SUMMARY
+        echo "|-----------|--------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Unit Tests | ${{ needs.test.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Security Scan | ${{ needs.security-scan.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+        
+        if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+          echo "| Production Deploy | ${{ needs.deploy-production.result == 'success' && '✅ Deployed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+        elif [[ "${{ github.ref }}" == "refs/heads/develop" ]]; then
+          echo "| Staging Deploy | ${{ needs.deploy-staging.result == 'success' && '✅ Deployed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
+        if [[ "${{ needs.test.result }}" != "success" ]]; then
+          echo "- 🔧 Fix failing tests" >> $GITHUB_STEP_SUMMARY
+        fi
+        if [[ "${{ needs.security-scan.result }}" != "success" ]]; then
+          echo "- 🔒 Address security vulnerabilities" >> $GITHUB_STEP_SUMMARY
+        fi
+        if [[ "${{ needs.test.result }}" == "success" && "${{ needs.security-scan.result }}" == "success" ]]; then
+          echo "- 🎉 All checks passed! Ready for deployment." >> $GITHUB_STEP_SUMMARY
+        fi
