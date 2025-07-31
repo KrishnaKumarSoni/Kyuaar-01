@@ -61,8 +61,8 @@ def initialize_firebase():
         
         # Initialize Firebase app if not already initialized
         if not firebase_admin._apps:
-            storage_bucket = os.environ.get('FIREBASE_STORAGE_BUCKET', 'kyuaar-01.firebasestorage.app')
-            logger.info(f"Initializing Firebase with storage bucket: {storage_bucket}")
+            storage_bucket = os.environ.get('FIREBASE_STORAGE_BUCKET', 'kyuaar-01.firebasestorage.app').strip()
+            logger.info(f"Initializing Firebase with storage bucket: '{storage_bucket}'")
             
             firebase_admin.initialize_app(cred, {
                 'storageBucket': storage_bucket
