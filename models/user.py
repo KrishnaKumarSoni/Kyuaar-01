@@ -38,6 +38,12 @@ class User(UserMixin):
     def get_by_email(email):
         """Retrieve user by email from Firestore"""
         try:
+            # Check if Firebase is available
+            import firebase_admin
+            if not firebase_admin._apps:
+                logger.error("Firebase not initialized - cannot authenticate")
+                return None
+            
             db = firestore.client()
             users_ref = db.collection('users')
             query = users_ref.where('email', '==', email).limit(1)

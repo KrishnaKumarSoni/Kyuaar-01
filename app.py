@@ -32,44 +32,69 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Initialize Firebase Admin SDK
-try:
-    # Use service account from environment or file
-    if os.environ.get('FIREBASE_CREDENTIALS'):
-        import json
-        logger.info("Using Firebase credentials from environment variable")
-        cred_dict = json.loads(os.environ.get('FIREBASE_CREDENTIALS'))
-        cred = credentials.Certificate(cred_dict)
-    else:
-        # Use the specific Firebase credentials file
-        cred_file = 'kyuaar-01-firebase-adminsdk-fbsvc-6ffa60ee84.json'
-        if os.path.exists(cred_file):
-            cred = credentials.Certificate(cred_file)
-            logger.info(f"Using credentials from file: {cred_file}")
+def initialize_firebase():
+    """Initialize Firebase with proper error handling and logging"""
+    try:
+        # Use service account from environment or file
+        if os.environ.get('FIREBASE_CREDENTIALS'):
+            import json
+            logger.info("Using Firebase credentials from environment variable")
+            creds_json = os.environ.get('FIREBASE_CREDENTIALS')
+            logger.info(f"Credentials length: {len(creds_json) if creds_json else 0}")
+            cred_dict = json.loads(creds_json)
+            logger.info(f"Parsed credentials for project: {cred_dict.get('project_id')}")
+            cred = credentials.Certificate(cred_dict)
         else:
-            # Fallback to the original name
-            cred = credentials.Certificate('firebase-credentials.json')
-            logger.info("Using fallback credentials file")
-    
-    # Initialize Firebase app if not already initialized
-    if not firebase_admin._apps:
-        firebase_admin.initialize_app(cred, {
-            'storageBucket': os.environ.get('FIREBASE_STORAGE_BUCKET', 'kyuaar-packets.appspot.com')
-        })
-        logger.info("Firebase app initialized")
-    else:
-        logger.info("Firebase app already initialized")
-    
-    # Initialize Firestore client and storage bucket
-    db = firestore.client()
-    bucket = storage.bucket()
-    logger.info("Firebase clients initialized successfully")
-    
-except Exception as e:
-    logger.error(f"Failed to initialize Firebase: {e}")
-    logger.error(f"Firebase environment variable present: {bool(os.environ.get('FIREBASE_CREDENTIALS'))}")
-    db = None
-    bucket = None
-    # Don't raise - allow app to continue without Firebase
+            # Use the specific Firebase credentials file
+            cred_file = 'kyuaar-01-firebase-adminsdk-fbsvc-6ffa60ee84.json'
+            if os.path.exists(cred_file):
+                cred = credentials.Certificate(cred_file)
+                logger.info(f"Using credentials from file: {cred_file}")
+            else:
+                # Fallback to the original name
+                cred_file = 'firebase-credentials.json'
+                if os.path.exists(cred_file):
+                    cred = credentials.Certificate(cred_file)
+                    logger.info(f"Using fallback credentials file: {cred_file}")
+                else:
+                    raise FileNotFoundError("No Firebase credentials file found")
+        
+        # Initialize Firebase app if not already initialized
+        if not firebase_admin._apps:
+            storage_bucket = os.environ.get('FIREBASE_STORAGE_BUCKET', 'kyuaar-packets.appspot.com')
+            logger.info(f"Initializing Firebase with storage bucket: {storage_bucket}")
+            
+            firebase_admin.initialize_app(cred, {
+                'storageBucket': storage_bucket
+            })
+            logger.info("Firebase app initialized successfully")
+        else:
+            logger.info("Firebase app already initialized")
+        
+        # Test Firebase connection
+        db = firestore.client()
+        bucket = storage.bucket()
+        
+        # Test basic connectivity
+        db.collection('_test').limit(1).get()
+        logger.info("Firebase Firestore connection verified")
+        
+        bucket.get_blob('_test')  # This will not fail even if blob doesn't exist
+        logger.info("Firebase Storage connection verified")
+        
+        return db, bucket
+        
+    except Exception as e:
+        logger.error(f"Critical error initializing Firebase: {e}")
+        logger.error(f"Environment variables:")
+        logger.error(f"  FIREBASE_CREDENTIALS present: {bool(os.environ.get('FIREBASE_CREDENTIALS'))}")
+        logger.error(f"  FIREBASE_STORAGE_BUCKET: {os.environ.get('FIREBASE_STORAGE_BUCKET')}")
+        
+        # Re-raise the exception to prevent the app from starting with broken Firebase
+        raise e
+
+# Initialize Firebase
+db, bucket = initialize_firebase()
 
 # Initialize Flask-Login
 login_manager = LoginManager()
