@@ -292,7 +292,7 @@ class Packet:
             packet_id=data.get('id'),
             user_id=data.get('user_id'),
             qr_count=data.get('qr_count', 25),
-            state=data.get('state', PacketStates.SETUP_PENDING),
+            state=data.get('state', PacketStates.SETUP_DONE),
             config_state=data.get('config_state', 'pending'),
             price=data.get('price', 0.0),
             base_url=data.get('base_url'),

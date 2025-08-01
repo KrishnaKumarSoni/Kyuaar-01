@@ -241,7 +241,6 @@ def get_user_statistics():
         stats = {
             'total_packets': len(packets),
             'by_state': {
-                'setup_pending': 0,
                 'setup_done': 0,
                 'config_pending': 0,
                 'config_done': 0
@@ -308,9 +307,7 @@ def configure_packet_redirect(packet_id):
         
         # Check if packet is in correct state for configuration
         if packet.state != PacketStates.CONFIG_PENDING:
-            if packet.state == PacketStates.SETUP_PENDING:
-                return jsonify({'error': 'Packet not ready for configuration'}), 400
-            elif packet.state == PacketStates.SETUP_DONE:
+            if packet.state == PacketStates.SETUP_DONE:
                 return jsonify({'error': 'Packet not yet sold'}), 400
             elif packet.state == PacketStates.CONFIG_DONE:
                 # Allow reconfiguration if enabled

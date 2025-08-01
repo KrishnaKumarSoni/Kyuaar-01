@@ -126,7 +126,6 @@
                                 <div class="flex items-center space-x-2">
                                     <span class="px-2 py-1 text-xs rounded-full 
                                         {% if packet.state == 'config_done' %}bg-green-500/20 text-green-400
-                                        {% elif packet.state == 'setup_pending' %}bg-yellow-500/20 text-yellow-400
                                         {% elif packet.state == 'setup_done' %}bg-blue-500/20 text-blue-400
                                         {% elif packet.state == 'config_pending' %}bg-purple-500/20 text-purple-400
                                         {% else %}bg-zinc-500/20 text-zinc-400{% endif %}">

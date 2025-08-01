@@ -163,13 +163,8 @@ def handle_packet_redirect(packet_id):
         }
         db.collection('scan_logs').add(scan_log)
         
-        # Handle based on state
-        if packet.state == PacketStates.SETUP_PENDING:
-            return render_template('error.html',
-                                 error_message="Packet not ready",
-                                 error_details="This QR packet is being prepared. Please try again later."), 503
-        
-        elif packet.state == PacketStates.SETUP_DONE:
+        # Handle based on state - SETUP_PENDING state removed
+        if packet.state == PacketStates.SETUP_DONE:
             return render_template('error.html',
                                  error_message="Packet not activated",
                                  error_details="This QR packet has not been activated yet. Please contact the seller."), 403

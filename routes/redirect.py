@@ -48,15 +48,10 @@ def handle_scan(packet_id):
             'last_scanned': datetime.now(timezone.utc)
         })
         
-        # Handle based on state
+        # Handle based on state - SETUP_PENDING state removed
         state = packet_data['state']
         
-        if state == 'setup_pending':
-            return render_template('error.html',
-                                 error_message="Packet not ready",
-                                 error_details="This QR packet is being prepared. Please try again later."), 503
-        
-        elif state == 'setup_done':
+        if state == 'setup_done':
             return render_template('error.html',
                                  error_message="Packet not activated",
                                  error_details="This QR packet has not been activated yet. Please contact the seller."), 403
