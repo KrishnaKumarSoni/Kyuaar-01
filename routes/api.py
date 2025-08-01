@@ -60,17 +60,74 @@ def create_packet():
         if not packet:
             return jsonify({'error': 'Failed to create packet'}), 500
         
+        # Get user's default QR settings
+        user = User.get_by_id(current_user.id)
+        default_settings = getattr(user, 'default_qr_settings', None) or {
+            'module_drawer': 'square',
+            'eye_drawer': 'square',
+            'fill_color': '#000000',
+            'back_color': '#FFFFFF',
+            'box_size': 10,
+            'border': 4
+        }
+        
+        # Generate QR code with default style
+        from services.qr_generator import qr_generator
+        import base64
+        
+        # Create packet URL
+        base_url = os.environ.get('BASE_URL', 'https://kyuaar.com')
+        packet_url = f"{base_url}/packet/{packet.id}"
+        
+        # Generate QR
+        qr_result = qr_generator.generate_qr_code(
+            data=packet_url,
+            packet_id=packet.id,
+            settings=default_settings
+        )
+        
+        if not qr_result['success']:
+            logger.error(f"Failed to generate QR for packet {packet.id}: {qr_result.get('error')}")
+            return jsonify({'error': 'Failed to generate QR code'}), 500
+        
+        # Save QR to Firebase
+        image_data = base64.b64decode(qr_result['image_base64'])
+        qr_url = qr_generator.save_to_firebase(
+            image_data=image_data,
+            filename="qr.png",
+            packet_id=packet.id,
+            settings=default_settings
+        )
+        
+        if not qr_url:
+            logger.error(f"Failed to save QR to Firebase for packet {packet.id}")
+            return jsonify({'error': 'Failed to save QR code'}), 500
+        
+        # Update packet with QR URL and set to SETUP_DONE
+        from models.packet import PacketStates
+        packet.qr_image_url = qr_url
+        packet.state = PacketStates.SETUP_DONE
+        
+        # Save updated packet
+        db = firestore.client()
+        packet_ref = db.collection('packets').document(packet.id)
+        packet_ref.update({
+            'qr_image_url': qr_url,
+            'state': PacketStates.SETUP_DONE,
+            'updated_at': datetime.now(timezone.utc)
+        })
+        
         # Log activity
         Activity.log(
             user_id=current_user.id,
             activity_type=ActivityType.PACKET_CREATED,
             title='Packet Created',
-            description=f'Created packet {packet.id} with {qr_count} QR codes',
-            metadata={'packet_id': packet.id, 'qr_count': qr_count}
+            description=f'Created packet {packet.id} with {qr_count} QR codes and auto-generated QR',
+            metadata={'packet_id': packet.id, 'qr_count': qr_count, 'qr_url': qr_url}
         )
         
         return jsonify({
-            'message': 'Packet created successfully',
+            'message': 'Packet created successfully with QR code',
             'packet': packet.to_dict()
         }), 201
         
@@ -93,77 +150,7 @@ def get_packet(packet_id):
         logger.error(f"Error getting packet {packet_id}: {e}")
         return jsonify({'error': 'Failed to retrieve packet'}), 500
 
-@api_bp.route('/packets/<packet_id>/upload', methods=['POST'])
-@login_required
-def upload_qr_image(packet_id):
-    """Upload QR image for packet"""
-    try:
-        # Get packet
-        packet = Packet.get_by_id_and_user(packet_id, current_user.id)
-        if not packet:
-            return jsonify({'error': 'Packet not found'}), 404
-        
-        # Check if file is present
-        if 'qr_image' not in request.files:
-            return jsonify({'error': 'No file uploaded'}), 400
-        
-        file = request.files['qr_image']
-        if file.filename == '':
-            return jsonify({'error': 'No file selected'}), 400
-        
-        # Validate file type
-        allowed_extensions = {'png', 'jpg', 'jpeg'}
-        file_ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else ''
-        if file_ext not in allowed_extensions:
-            return jsonify({'error': 'Invalid file type. Only PNG and JPG allowed'}), 400
-        
-        # Validate file size (5MB max)
-        file.seek(0, os.SEEK_END)
-        file_size = file.tell()
-        file.seek(0)
-        if file_size > 5 * 1024 * 1024:
-            return jsonify({'error': 'File too large. Maximum 5MB allowed'}), 400
-        
-        # Check packet state
-        if not packet.can_transition_to(PacketStates.SETUP_DONE):
-            return jsonify({'error': 'Packet not ready for QR upload'}), 400
-        
-        # Upload to Firebase Storage
-        bucket = storage.bucket()
-        blob_name = f'qr_images/{packet_id}.{file_ext}'
-        blob = bucket.blob(blob_name)
-        
-        # Upload file
-        blob.upload_from_file(file, content_type=file.content_type)
-        blob.make_public()
-        
-        # Get public URL
-        public_url = blob.public_url
-        
-        # Update packet
-        if packet.mark_setup_complete(public_url):
-            packet.save()
-            
-            # Log activity
-            Activity.log(
-                user_id=current_user.id,
-                activity_type=ActivityType.PACKET_UPLOADED,
-                title='QR Image Uploaded',
-                description=f'Uploaded QR image for packet {packet_id}',
-                metadata={'packet_id': packet_id, 'image_url': public_url}
-            )
-            
-            return jsonify({
-                'message': 'QR image uploaded successfully',
-                'image_url': public_url,
-                'packet': packet.to_dict()
-            })
-        else:
-            return jsonify({'error': 'Failed to update packet state'}), 500
-        
-    except Exception as e:
-        logger.error(f"Error uploading QR image for packet {packet_id}: {e}")
-        return jsonify({'error': 'Failed to upload QR image'}), 500
+# QR upload endpoint removed - QR codes are now auto-generated during packet creation
 
 @api_bp.route('/packets/<packet_id>/sell', methods=['POST'])
 @login_required
@@ -404,6 +391,79 @@ def get_packet_status(packet_id):
     except Exception as e:
         logger.error(f"Error getting packet status: {e}")
         return jsonify({'error': 'Failed to get packet status'}), 500
+
+# ============= SETTINGS API =============
+
+@api_bp.route('/settings/qr-style', methods=['GET'])
+@login_required
+def get_qr_style_settings():
+    """Get user's default QR style settings"""
+    try:
+        user = User.get_by_id(current_user.id)
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+        
+        # Get default QR settings or return system defaults
+        default_settings = getattr(user, 'default_qr_settings', None) or {
+            'module_drawer': 'square',
+            'eye_drawer': 'square',
+            'fill_color': '#000000',
+            'back_color': '#FFFFFF',
+            'box_size': 10,
+            'border': 4
+        }
+        
+        return jsonify({
+            'success': True,
+            'settings': default_settings
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting QR style settings: {e}")
+        return jsonify({'error': 'Failed to retrieve settings'}), 500
+
+@api_bp.route('/settings/qr-style', methods=['POST'])
+@login_required
+def save_qr_style_settings():
+    """Save user's default QR style settings"""
+    try:
+        data = request.get_json()
+        settings = data.get('settings')
+        
+        if not settings:
+            return jsonify({'error': 'No settings provided'}), 400
+        
+        # Validate settings
+        required_fields = ['module_drawer', 'eye_drawer', 'fill_color', 'back_color', 'box_size', 'border']
+        for field in required_fields:
+            if field not in settings:
+                return jsonify({'error': f'Missing required field: {field}'}), 400
+        
+        # Update user document
+        db = firestore.client()
+        user_ref = db.collection('users').document(current_user.id)
+        user_ref.update({
+            'default_qr_settings': settings,
+            'updated_at': datetime.now(timezone.utc)
+        })
+        
+        # Log activity
+        Activity.log(
+            user_id=current_user.id,
+            activity_type=ActivityType.SETTINGS_UPDATED,
+            title='QR Style Updated',
+            description='Updated default QR code style settings',
+            metadata={'settings': settings}
+        )
+        
+        return jsonify({
+            'success': True,
+            'message': 'QR style settings saved successfully'
+        })
+        
+    except Exception as e:
+        logger.error(f"Error saving QR style settings: {e}")
+        return jsonify({'error': 'Failed to save settings'}), 500
 
 # ============= QR CODE GENERATION API =============
 

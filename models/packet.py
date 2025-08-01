@@ -14,16 +14,14 @@ logger = logging.getLogger(__name__)
 
 class PacketStates:
     """Constants for packet states"""
-    SETUP_PENDING = 'setup_pending'
     SETUP_DONE = 'setup_done'
     CONFIG_PENDING = 'config_pending'
     CONFIG_DONE = 'config_done'
     
-    ALL_STATES = [SETUP_PENDING, SETUP_DONE, CONFIG_PENDING, CONFIG_DONE]
+    ALL_STATES = [SETUP_DONE, CONFIG_PENDING, CONFIG_DONE]
     
     # Valid state transitions
     TRANSITIONS = {
-        SETUP_PENDING: [SETUP_DONE],
         SETUP_DONE: [CONFIG_PENDING],
         CONFIG_PENDING: [CONFIG_DONE],
         CONFIG_DONE: [CONFIG_PENDING]  # Allow reconfiguration
@@ -34,7 +32,7 @@ class Packet:
     """Packet model representing a QR code packet"""
     
     def __init__(self, packet_id: str = None, user_id: str = None, qr_count: int = 25,
-                 state: str = PacketStates.SETUP_PENDING, config_state: str = 'pending',
+                 state: str = PacketStates.SETUP_DONE, config_state: str = 'pending',
                  price: float = 0.0, base_url: str = None, qr_image_url: str = None,
                  redirect_url: str = None, buyer_name: str = None, buyer_email: str = None,
                  sale_price: float = None, sale_date: datetime = None,

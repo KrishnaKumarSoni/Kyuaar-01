@@ -19,6 +19,7 @@ class ActivityType:
     PACKET_DELETED = 'packet_deleted'
     USER_LOGIN = 'user_login'
     USER_REGISTER = 'user_register'
+    SETTINGS_UPDATED = 'settings_updated'
 
 class Activity:
     """Activity model for tracking user actions"""

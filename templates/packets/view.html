@@ -17,7 +17,6 @@
             <div class="flex items-center space-x-2">
                 <span class="px-3 py-1 text-sm rounded-full 
                     {% if packet.state == 'config_done' %}bg-green-500/20 text-green-400
-                    {% elif packet.state == 'setup_pending' %}bg-yellow-500/20 text-yellow-400
                     {% elif packet.state == 'setup_done' %}bg-blue-500/20 text-blue-400
                     {% elif packet.state == 'config_pending' %}bg-purple-500/20 text-purple-400
                     {% else %}bg-zinc-500/20 text-zinc-400{% endif %}">
@@ -180,12 +179,7 @@
                 <h3 class="text-lg font-semibold mb-4">Actions</h3>
                 
                 <div class="space-y-3">
-                    {% if packet.state == 'setup_pending' %}
-                    <button onclick="uploadQRImage()" class="btn btn-primary w-full">
-                        <i class="ph ph-upload mr-2"></i>
-                        Upload QR Image
-                    </button>
-                    {% elif packet.state == 'setup_done' %}
+                    {% if packet.state == 'setup_done' %}
                     <button onclick="showSellModal()" class="btn btn-primary w-full">
                         <i class="ph ph-currency-circle-dollar mr-2"></i>
                         Mark as Sold
@@ -313,35 +307,7 @@ function copyToClipboard(text) {
     // Could add a toast notification here
 }
 
-function uploadQRImage() {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/png,image/jpeg,image/jpg';
-    input.onchange = async function(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-        
-        const formData = new FormData();
-        formData.append('qr_image', file);
-        
-        try {
-            const response = await fetch(`/api/packets/{{ packet.id }}/upload`, {
-                method: 'POST',
-                body: formData
-            });
-            
-            if (response.ok) {
-                location.reload();
-            } else {
-                const error = await response.json();
-                alert('Upload failed: ' + (error.error || 'Unknown error'));
-            }
-        } catch (error) {
-            alert('Upload error: ' + error.message);
-        }
-    };
-    input.click();
-}
+// QR upload functionality removed - QR codes are now auto-generated
 
 async function markAsSold(event) {
     event.preventDefault();
