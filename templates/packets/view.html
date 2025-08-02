@@ -47,10 +47,12 @@
                             <p class="text-lg font-semibold text-foreground">{{ packet.qr_count }} codes</p>
                         </div>
                         <div>
-                            <p class="text-sm text-muted-foreground">Sale Price</p>
+                            <p class="text-sm text-muted-foreground">Price</p>
                             <p class="text-lg font-semibold text-foreground">
-                                {% if packet.sale_price %}
+                                {% if packet.is_sold() and packet.sale_price %}
                                     ₹{{ packet.sale_price|int }}
+                                {% elif packet.price %}
+                                    ₹{{ packet.price|int }}
                                 {% else %}
                                     <span class="text-zinc-400">Not set</span>
                                 {% endif %}
@@ -127,7 +129,7 @@
                     <div class="space-y-4">
                         <div>
                             <p class="text-sm text-zinc-400">Sale Price</p>
-                            <p class="text-lg font-semibold">₹{{ packet.sale_price|int if packet.sale_price else 'Not set' }}</p>
+                            <p class="text-lg font-semibold">₹{{ packet.sale_price|int if packet.sale_price else packet.price|int if packet.price else 'Not set' }}</p>
                         </div>
                         <div>
                             <p class="text-sm text-zinc-400">Sale Date</p>
@@ -220,10 +222,15 @@
                         <span class="text-zinc-400">QR Codes</span>
                         <span class="font-semibold">{{ packet.qr_count }}</span>
                     </div>
-                    {% if packet.sale_price %}
+                    {% if packet.is_sold() and packet.sale_price %}
                     <div class="flex items-center justify-between">
                         <span class="text-zinc-400">Sale Price</span>
                         <span class="font-semibold text-green-400">₹{{ packet.sale_price|int }}</span>
+                    </div>
+                    {% elif packet.price %}
+                    <div class="flex items-center justify-between">
+                        <span class="text-zinc-400">Price</span>
+                        <span class="font-semibold">₹{{ packet.price|int }}</span>
                     </div>
                     {% endif %}
                 </div>

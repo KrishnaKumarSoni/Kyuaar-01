@@ -57,9 +57,12 @@
                             </td>
                             <td class="p-4">
                                 <div class="text-sm">
-                                    {% if packet.sale_price %}
+                                    {% if packet.is_sold() and packet.sale_price %}
                                         <p class="font-medium text-foreground">₹{{ packet.sale_price|int }}</p>
                                         <p class="text-xs text-zinc-400">Sale price</p>
+                                    {% elif packet.price %}
+                                        <p class="font-medium text-foreground">₹{{ packet.price|int }}</p>
+                                        <p class="text-xs text-zinc-400">Base price</p>
                                     {% else %}
                                         <p class="font-medium text-zinc-400">Not set</p>
                                         <p class="text-xs text-zinc-400">{{ packet.qr_count }} QR codes</p>
