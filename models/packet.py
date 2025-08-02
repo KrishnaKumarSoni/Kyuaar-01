@@ -36,7 +36,7 @@ class Packet:
                  price: float = 0.0, base_url: str = None, qr_image_url: str = None,
                  redirect_url: str = None, buyer_name: str = None, buyer_email: str = None,
                  sale_price: float = None, sale_date: datetime = None,
-                 created_at: datetime = None, updated_at: datetime = None):
+                 created_at: datetime = None, updated_at: datetime = None, deleted: bool = False):
         
         self.id = packet_id or self._generate_packet_id()
         self.user_id = user_id
@@ -53,6 +53,7 @@ class Packet:
         self.sale_date = sale_date
         self.created_at = created_at or datetime.now(timezone.utc)
         self.updated_at = updated_at or datetime.now(timezone.utc)
+        self.deleted = deleted
     
     @staticmethod
     def _generate_packet_id() -> str:
@@ -168,7 +169,7 @@ class Packet:
     
     @classmethod
     def get_by_id(cls, packet_id: str) -> Optional['Packet']:
-        """Get packet by ID from Firestore"""
+        """Get packet by ID from Firestore (excluding deleted ones)"""
         try:
             db = firestore.client()
             doc_ref = db.collection('packets').document(packet_id)
@@ -178,6 +179,12 @@ class Packet:
                 return None
             
             data = doc.to_dict()
+            data['id'] = doc.id  # Ensure ID is set
+            
+            # Skip deleted packets
+            if data.get('deleted', False):
+                return None
+            
             return cls.from_dict(data)
             
         except Exception as e:
@@ -186,10 +193,10 @@ class Packet:
     
     @classmethod
     def get_by_user(cls, user_id: str, limit: int = None) -> List['Packet']:
-        """Get all packets for a user"""
+        """Get all packets for a user (excluding deleted ones)"""
         try:
             db = firestore.client()
-            query = db.collection('packets').where('user_id', '==', user_id)
+            query = db.collection('packets').where('user_id', '==', user_id).where('deleted', '!=', True)
             
             if limit:
                 query = query.limit(limit)
@@ -199,6 +206,7 @@ class Packet:
             packets = []
             for doc in docs:
                 data = doc.to_dict()
+                data['id'] = doc.id  # Ensure ID is set
                 packets.append(cls.from_dict(data))
             
             return packets
@@ -269,7 +277,8 @@ class Packet:
             'sale_price': self.sale_price,
             'sale_date': self.sale_date.isoformat() if self.sale_date else None,
             'created_at': self.created_at.isoformat() if self.created_at else None,
-            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+            'deleted': self.deleted
         }
     
     @classmethod
@@ -303,15 +312,25 @@ class Packet:
             sale_price=data.get('sale_price'),
             sale_date=sale_date,
             created_at=created_at,
-            updated_at=updated_at
+            updated_at=updated_at,
+            deleted=data.get('deleted', False)
         )
     
     def delete(self) -> bool:
-        """Delete the packet from Firestore"""
+        """Soft delete the packet (mark as deleted)"""
         try:
+            self.deleted = True
+            self.updated_at = datetime.now(timezone.utc)
+            
             db = firestore.client()
-            db.collection('packets').document(self.id).delete()
-            logger.info(f"Deleted packet {self.id}")
+            packet_ref = db.collection('packets').document(self.id)
+            packet_ref.update({
+                'deleted': True,
+                'deleted_at': datetime.now(timezone.utc),
+                'updated_at': self.updated_at
+            })
+            
+            logger.info(f"Soft deleted packet {self.id}")
             return True
             
         except Exception as e:
@@ -320,11 +339,16 @@ class Packet:
     
     @classmethod
     def delete_by_id(cls, packet_id: str) -> bool:
-        """Delete packet by ID"""
+        """Soft delete packet by ID"""
         try:
             db = firestore.client()
-            db.collection('packets').document(packet_id).delete()
-            logger.info(f"Deleted packet {packet_id}")
+            packet_ref = db.collection('packets').document(packet_id)
+            packet_ref.update({
+                'deleted': True,
+                'deleted_at': datetime.now(timezone.utc),
+                'updated_at': datetime.now(timezone.utc)
+            })
+            logger.info(f"Soft deleted packet {packet_id}")
             return True
             
         except Exception as e:
