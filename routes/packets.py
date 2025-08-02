@@ -4,7 +4,14 @@ Packet management routes for CRUD operations
 
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_required, current_user
-from models.packet import Packet
+from models.packet import Packet, PacketStates
+from models.user import User
+from models.activity import Activity, ActivityType
+from services.qr_generator import qr_generator
+from firebase_admin import firestore
+from datetime import datetime, timezone
+import os
+import base64
 import logging
 
 packets_bp = Blueprint('packets', __name__)
@@ -49,7 +56,69 @@ def create():
             )
             
             if packet:
-                flash('Packet created successfully! Now upload QR images from the dashboard.', 'success')
+                # Get user's default QR settings
+                user = User.get_by_id(current_user.id)
+                default_settings = getattr(user, 'default_qr_settings', None) or {
+                    'module_drawer': 'square',
+                    'eye_drawer': 'square',
+                    'fill_color': '#000000',
+                    'back_color': '#FFFFFF',
+                    'box_size': 10,
+                    'border': 4
+                }
+                
+                # Generate QR code with default style
+                base_url = os.environ.get('BASE_URL', 'https://kyuaar.com')
+                packet_url = f"{base_url}/packet/{packet.id}"
+                
+                # Generate QR
+                qr_result = qr_generator.generate_qr_code(
+                    data=packet_url,
+                    packet_id=packet.id,
+                    settings=default_settings
+                )
+                
+                if qr_result and qr_result.get('success'):
+                    # Save QR to Firebase
+                    try:
+                        image_data = base64.b64decode(qr_result['image_base64'])
+                        qr_url = qr_generator.save_to_firebase(
+                            image_data=image_data,
+                            filename="qr.png",
+                            packet_id=packet.id,
+                            settings=default_settings
+                        )
+                        
+                        if qr_url:
+                            # Update packet with QR URL and set to SETUP_DONE
+                            db = firestore.client()
+                            packet_ref = db.collection('packets').document(packet.id)
+                            packet_ref.update({
+                                'qr_image_url': qr_url,
+                                'state': PacketStates.SETUP_DONE,
+                                'updated_at': datetime.now(timezone.utc)
+                            })
+                            
+                            # Log activity
+                            Activity.log(
+                                user_id=current_user.id,
+                                activity_type=ActivityType.PACKET_CREATED,
+                                title='Packet Created',
+                                description=f'Created packet {packet.id} with {qr_count} QR codes and auto-generated QR',
+                                metadata={'packet_id': packet.id, 'qr_count': qr_count, 'qr_url': qr_url}
+                            )
+                            
+                            flash('Packet created successfully with QR code!', 'success')
+                        else:
+                            logger.error(f"Failed to save QR to Firebase for packet {packet.id}")
+                            flash('Packet created but QR generation failed', 'warning')
+                    except Exception as e:
+                        logger.error(f"Error processing QR for packet {packet.id}: {e}")
+                        flash('Packet created but QR generation failed', 'warning')
+                else:
+                    logger.error(f"Failed to generate QR for packet {packet.id}")
+                    flash('Packet created but QR generation failed', 'warning')
+                
                 return redirect(url_for('packets.view', packet_id=packet.id))
             else:
                 flash('Failed to create packet', 'error')
