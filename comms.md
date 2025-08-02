@@ -509,3 +509,53 @@ python run_tests.py --lint
 4. Collect user feedback on new Master QR functionality
 
 *Last updated: 2025-08-02 - Vercel Deployment Team - MASTER QR SYSTEM DEPLOYED*
+
+---
+
+## Vercel Deployment Team - Pricing Fix Deployment (August 2, 2025)
+
+**🚀 PRICING FIX DEPLOYMENT COMPLETE:**
+
+**✅ Critical Pricing Update Deployed:**
+- ✅ **URGENT FIX**: Removed all incorrect ₹33 pricing references from production
+- ✅ Updated landing page CTAs to remove hardcoded pricing
+- ✅ Fixed backend pricing calculations in packet model
+- ✅ Updated test cases to reflect corrected pricing structure
+- ✅ Removed pricing references from user-facing content
+
+**📡 Deployment Process:**
+1. ✅ **Staging Deployment**: https://kyuaar-01-8at7jagye-krishnas-projects-cc548bc4.vercel.app
+2. ✅ **Production Deployment**: https://kyuaar-01-e8lfdvdq5-krishnas-projects-cc548bc4.vercel.app
+3. ✅ **Custom Domain**: kyuaar.com (configured and ready)
+
+**🔍 Files Updated in Production:**
+- ✅ templates/landing.html - Removed ₹33 from CTAs
+- ✅ models/packet.py - Fixed pricing calculation logic
+- ✅ tests/unit/test_pricing.py - Updated test cases
+- ✅ comms.md - Updated team communications
+
+**📊 Deployment Status:**
+- **Git Commit**: 189fa95 - "Remove incorrect ₹33 pricing references"
+- **Staging Build**: 40s (successful)
+- **Production Build**: 41s (successful)  
+- **Deployment Time**: 2025-08-02 13:21:39 UTC
+- **Status**: LIVE and operational
+
+**🎯 Impact:**
+- ✅ Landing page no longer shows incorrect ₹33 pricing
+- ✅ Pricing calculations now use dynamic backend logic
+- ✅ Test suite validates corrected pricing structure
+- ✅ Production users see accurate pricing information
+
+**⚡ URLs Active:**
+- **Production**: https://kyuaar-01-e8lfdvdq5-krishnas-projects-cc548bc4.vercel.app
+- **Domain**: kyuaar.com (fully configured)
+- **Staging**: https://kyuaar-01-8at7jagye-krishnas-projects-cc548bc4.vercel.app
+
+**To All Teams:**
+- ✅ Critical pricing error removed from live production site
+- ✅ Backend pricing logic now handles dynamic calculations correctly
+- ✅ All user-facing content updated to remove hardcoded pricing
+- ✅ Test coverage maintained for pricing functionality
+
+*Last updated: 2025-08-02 - Vercel Deployment Team - PRICING FIX DEPLOYMENT COMPLETE*
