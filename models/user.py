@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class User(UserMixin):
     """User model with Firebase Firestore backend"""
     
-    def __init__(self, user_id, email, name, password_hash=None, role='admin', created_at=None):
+    def __init__(self, user_id, email, name, password_hash=None, role='admin', created_at=None, default_qr_settings=None):
         self.id = user_id
         self.email = email
         self.name = name
@@ -23,6 +23,7 @@ class User(UserMixin):
         self.role = role
         self.created_at = created_at or datetime.now(timezone.utc)
         self.is_active_user = True
+        self.default_qr_settings = default_qr_settings
     
     def check_password(self, password):
         """Check if provided password matches stored hash"""
@@ -61,7 +62,8 @@ class User(UserMixin):
                 name=data.get('name'),
                 password_hash=data.get('password_hash'),
                 role=data.get('role', 'admin'),
-                created_at=data.get('created_at')
+                created_at=data.get('created_at'),
+                default_qr_settings=data.get('default_qr_settings')
             )
         except Exception as e:
             logger.error(f"Error retrieving user by email {email}: {e}")
@@ -86,7 +88,8 @@ class User(UserMixin):
                 name=data.get('name'),
                 password_hash=data.get('password_hash'),
                 role=data.get('role', 'admin'),
-                created_at=data.get('created_at')
+                created_at=data.get('created_at'),
+                default_qr_settings=data.get('default_qr_settings')
             )
         except Exception as e:
             logger.error(f"Error retrieving user by ID {user_id}: {e}")
@@ -152,5 +155,6 @@ class User(UserMixin):
             'email': self.email,
             'name': self.name,
             'role': self.role,
-            'created_at': self.created_at.isoformat() if self.created_at else None
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'default_qr_settings': self.default_qr_settings
         }
