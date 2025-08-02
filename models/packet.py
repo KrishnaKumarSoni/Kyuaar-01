@@ -196,10 +196,11 @@ class Packet:
         """Get all packets for a user (excluding deleted ones)"""
         try:
             db = firestore.client()
-            query = db.collection('packets').where('user_id', '==', user_id).where('deleted', '!=', True)
+            # Use simple query first, then filter in Python to avoid composite index
+            query = db.collection('packets').where('user_id', '==', user_id)
             
             if limit:
-                query = query.limit(limit)
+                query = query.limit(limit * 2)  # Get more to account for filtering
             
             docs = query.stream()
             
@@ -207,7 +208,16 @@ class Packet:
             for doc in docs:
                 data = doc.to_dict()
                 data['id'] = doc.id  # Ensure ID is set
+                
+                # Skip deleted packets
+                if data.get('deleted', False):
+                    continue
+                    
                 packets.append(cls.from_dict(data))
+                
+                # Apply limit after filtering
+                if limit and len(packets) >= limit:
+                    break
             
             return packets
             
@@ -217,16 +227,28 @@ class Packet:
     
     @classmethod
     def count_by_user(cls, user_id: str, state: str = None) -> int:
-        """Count packets for a user, optionally filtered by state"""
+        """Count packets for a user, optionally filtered by state (excluding deleted)"""
         try:
             db = firestore.client()
             query = db.collection('packets').where('user_id', '==', user_id)
             
-            if state:
-                query = query.where('state', '==', state)
+            docs = query.stream()
+            count = 0
             
-            docs = list(query.stream())
-            return len(docs)
+            for doc in docs:
+                data = doc.to_dict()
+                
+                # Skip deleted packets
+                if data.get('deleted', False):
+                    continue
+                
+                # Filter by state if specified
+                if state and data.get('state') != state:
+                    continue
+                    
+                count += 1
+            
+            return count
             
         except Exception as e:
             logger.error(f"Error counting packets for user {user_id}: {e}")
@@ -287,33 +309,56 @@ class Packet:
         # Parse datetime fields
         created_at = None
         if data.get('created_at'):
-            created_at = datetime.fromisoformat(data['created_at'].replace('Z', '+00:00'))
+            try:
+                if isinstance(data['created_at'], str):
+                    created_at = datetime.fromisoformat(data['created_at'].replace('Z', '+00:00'))
+                else:
+                    # Handle Firestore timestamp
+                    created_at = data['created_at']
+            except (ValueError, TypeError) as e:
+                logger.warning(f"Error parsing created_at: {e}")
+                created_at = datetime.now(timezone.utc)
         
         updated_at = None
         if data.get('updated_at'):
-            updated_at = datetime.fromisoformat(data['updated_at'].replace('Z', '+00:00'))
+            try:
+                if isinstance(data['updated_at'], str):
+                    updated_at = datetime.fromisoformat(data['updated_at'].replace('Z', '+00:00'))
+                else:
+                    # Handle Firestore timestamp
+                    updated_at = data['updated_at']
+            except (ValueError, TypeError) as e:
+                logger.warning(f"Error parsing updated_at: {e}")
+                updated_at = datetime.now(timezone.utc)
         
         sale_date = None
         if data.get('sale_date'):
-            sale_date = datetime.fromisoformat(data['sale_date'].replace('Z', '+00:00'))
+            try:
+                if isinstance(data['sale_date'], str):
+                    sale_date = datetime.fromisoformat(data['sale_date'].replace('Z', '+00:00'))
+                else:
+                    # Handle Firestore timestamp
+                    sale_date = data['sale_date']
+            except (ValueError, TypeError) as e:
+                logger.warning(f"Error parsing sale_date: {e}")
         
         return cls(
             packet_id=data.get('id'),
             user_id=data.get('user_id'),
-            qr_count=data.get('qr_count', 25),
+            qr_count=int(data.get('qr_count', 25)) if data.get('qr_count') is not None else 25,
             state=data.get('state', PacketStates.SETUP_DONE),
             config_state=data.get('config_state', 'pending'),
-            price=data.get('price', 0.0),
+            price=float(data.get('price', 0.0)) if data.get('price') is not None else 0.0,
             base_url=data.get('base_url'),
             qr_image_url=data.get('qr_image_url'),
             redirect_url=data.get('redirect_url'),
             buyer_name=data.get('buyer_name'),
             buyer_email=data.get('buyer_email'),
-            sale_price=data.get('sale_price'),
+            sale_price=float(data.get('sale_price')) if data.get('sale_price') is not None else None,
             sale_date=sale_date,
             created_at=created_at,
             updated_at=updated_at,
-            deleted=data.get('deleted', False)
+            deleted=bool(data.get('deleted', False))
         )
     
     def delete(self) -> bool:
