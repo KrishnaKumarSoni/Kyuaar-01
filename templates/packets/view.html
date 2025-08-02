@@ -77,31 +77,90 @@
                 </div>
             </div>
             
-            <!-- QR Image -->
+            <!-- QR Codes -->
             {% if packet.qr_image_url %}
             <div class="card p-6">
-                <h2 class="text-xl font-semibold mb-4 flex items-center">
+                <h2 class="text-xl font-semibold mb-6 flex items-center">
                     <i class="ph ph-qr-code mr-2 text-primary text-lg"></i>
-                    QR Code Image
+                    QR Code Images
                 </h2>
                 
-                <div class="flex items-center justify-center">
-                    <img 
-                        src="{{ packet.qr_image_url }}" 
-                        alt="QR Code for {{ packet.id }}"
-                        class="max-w-xs border border-zinc-700 rounded-lg"
-                    >
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Main QR Code (Customer-facing) -->
+                    <div class="space-y-4">
+                        <div class="text-center">
+                            <h3 class="text-lg font-semibold text-foreground mb-2">Main QR Code</h3>
+                            <p class="text-sm text-zinc-400 mb-4">For customers to scan and configure</p>
+                            
+                            <div class="flex items-center justify-center mb-4">
+                                <img 
+                                    src="{{ packet.qr_image_url }}" 
+                                    alt="Main QR Code for {{ packet.id }}"
+                                    class="max-w-[200px] border border-zinc-700 rounded-lg"
+                                >
+                            </div>
+                            
+                            <div class="space-y-2">
+                                <a href="{{ packet.qr_image_url }}" target="_blank" class="btn btn-ghost w-full text-sm">
+                                    <i class="ph ph-download mr-2"></i>
+                                    Download Main QR
+                                </a>
+                                <button onclick="copyToClipboard('{{ packet.base_url }}')" class="btn btn-ghost w-full text-sm">
+                                    <i class="ph ph-copy mr-2"></i>
+                                    Copy Main URL
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Master QR Code (Update/Management) -->
+                    {% if packet.master_qr_url %}
+                    <div class="space-y-4">
+                        <div class="text-center">
+                            <h3 class="text-lg font-semibold text-foreground mb-2">Master QR Code</h3>
+                            <p class="text-sm text-zinc-400 mb-4">For updating redirect without reprints</p>
+                            
+                            <div class="flex items-center justify-center mb-4">
+                                <img 
+                                    src="{{ packet.master_qr_url }}" 
+                                    alt="Master QR Code for {{ packet.id }}"
+                                    class="max-w-[200px] border border-orange-500/30 rounded-lg"
+                                >
+                            </div>
+                            
+                            <div class="space-y-2">
+                                <a href="{{ packet.master_qr_url }}" target="_blank" class="btn btn-ghost w-full text-sm">
+                                    <i class="ph ph-download mr-2"></i>
+                                    Download Master QR
+                                </a>
+                                <button onclick="copyToClipboard('{{ url_for('handle_master_qr', master_id=packet.master_id, _external=True) }}')" class="btn btn-ghost w-full text-sm">
+                                    <i class="ph ph-copy mr-2"></i>
+                                    Copy Master URL
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
                 
-                <div class="mt-4 flex items-center justify-center space-x-3">
-                    <a href="{{ packet.qr_image_url }}" target="_blank" class="btn btn-ghost">
-                        <i class="ph ph-download mr-2"></i>
-                        Download
-                    </a>
-                    <button onclick="copyToClipboard('{{ packet.base_url }}')" class="btn btn-ghost">
-                        <i class="ph ph-copy mr-2"></i>
-                        Copy URL
-                    </button>
+                <!-- Usage Instructions -->
+                <div class="mt-6 p-4 bg-zinc-800/50 rounded-lg border border-zinc-700">
+                    <h4 class="text-sm font-semibold text-foreground mb-2">
+                        <i class="ph ph-info mr-1"></i>
+                        Usage Instructions
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-zinc-300">
+                        <div>
+                            <p class="font-medium text-blue-400 mb-1">Main QR Code:</p>
+                            <p>Print and distribute to customers. They scan to set up initial redirect URL (WhatsApp/website).</p>
+                        </div>
+                        {% if packet.master_qr_url %}
+                        <div>
+                            <p class="font-medium text-orange-400 mb-1">Master QR Code:</p>
+                            <p>Keep private. Customers can scan to update redirect URL without reprinting stickers (3 updates/day limit).</p>
+                        </div>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
             {% endif %}

@@ -203,6 +203,56 @@ def handle_packet_redirect(packet_id):
                              error_message="System error",
                              error_details="An error occurred processing your request."), 500
 
+# Master QR management handler
+@app.route('/manage/<master_id>')
+def handle_master_qr(master_id):
+    """Handle Master QR scans for packet updates"""
+    try:
+        from models.packet import Packet
+        from flask import render_template, request
+        from firebase_admin import firestore
+        
+        packet = Packet.get_by_master_id(master_id)
+        
+        if not packet:
+            return render_template('error.html',
+                                 error_message="Invalid Master QR",
+                                 error_details="This Master QR code is not valid or the packet has been deleted."), 404
+        
+        # Log master QR scan
+        db = firestore.client()
+        scan_log = {
+            'packet_id': packet.id,
+            'master_id': master_id,
+            'scan_type': 'master_update',
+            'scanned_at': datetime.now(timezone.utc),
+            'user_agent': request.headers.get('User-Agent'),
+            'ip_address': request.remote_addr
+        }
+        db.collection('scan_logs').add(scan_log)
+        
+        # Always show configuration page for Master QR (allows updates)
+        packet_data = {
+            'id': packet.id,
+            'master_id': packet.master_id,
+            'qr_count': packet.qr_count,
+            'state': packet.state,
+            'config_state': packet.config_state,
+            'created_at': packet.created_at.isoformat() if packet.created_at else None
+        }
+        
+        return render_template('manage.html',
+                             master_id=master_id,
+                             packet_data=packet_data,
+                             current_redirect=packet.redirect_url,
+                             is_update=True)
+        
+    except Exception as e:
+        logger.error(f"Error handling master QR {master_id}: {e}")
+        return render_template('error.html',
+                             error_message="System error",
+                             error_details="An error occurred processing your request."), 500
+
 # Customer-facing landing page and authenticated user redirect
 @app.route('/')
 def landing():

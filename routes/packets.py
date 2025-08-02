@@ -67,34 +67,53 @@ def create():
                     'border': 4
                 }
                 
-                # Generate QR code with default style
+                # Generate both Main QR and Master QR with default style
                 base_url = os.environ.get('BASE_URL', 'https://kyuaar.com')
-                packet_url = f"{base_url}/packet/{packet.id}"
+                main_url = f"{base_url}/packet/{packet.id}"
+                master_url = f"{base_url}/manage/{packet.master_id}"
                 
-                # Generate QR
-                qr_result = qr_generator.generate_qr_code(
-                    data=packet_url,
+                # Generate Main QR (customer-facing)
+                main_qr_result = qr_generator.generate_qr_code(
+                    data=main_url,
                     packet_id=packet.id,
                     settings=default_settings
                 )
                 
-                if qr_result and qr_result.get('success'):
-                    # Save QR to Firebase
+                # Generate Master QR (update/management)
+                master_qr_result = qr_generator.generate_qr_code(
+                    data=master_url,
+                    packet_id=packet.master_id,
+                    settings=default_settings
+                )
+                
+                if main_qr_result and main_qr_result.get('success') and master_qr_result and master_qr_result.get('success'):
+                    # Save both QRs to Firebase
                     try:
-                        image_data = base64.b64decode(qr_result['image_base64'])
-                        qr_url = qr_generator.save_to_firebase(
-                            image_data=image_data,
-                            filename="qr.png",
+                        # Save Main QR
+                        main_image_data = base64.b64decode(main_qr_result['image_base64'])
+                        main_qr_url = qr_generator.save_to_firebase(
+                            image_data=main_image_data,
+                            filename="main_qr.png",
                             packet_id=packet.id,
                             settings=default_settings
                         )
                         
-                        if qr_url:
-                            # Update packet with QR URL and set to SETUP_DONE
+                        # Save Master QR
+                        master_image_data = base64.b64decode(master_qr_result['image_base64'])
+                        master_qr_url = qr_generator.save_to_firebase(
+                            image_data=master_image_data,
+                            filename="master_qr.png",
+                            packet_id=packet.master_id,
+                            settings=default_settings
+                        )
+                        
+                        if main_qr_url and master_qr_url:
+                            # Update packet with both QR URLs and set to SETUP_DONE
                             db = firestore.client()
                             packet_ref = db.collection('packets').document(packet.id)
                             packet_ref.update({
-                                'qr_image_url': qr_url,
+                                'qr_image_url': main_qr_url,
+                                'master_qr_url': master_qr_url,
                                 'state': PacketStates.SETUP_DONE,
                                 'updated_at': datetime.now(timezone.utc)
                             })
@@ -104,19 +123,19 @@ def create():
                                 user_id=current_user.id,
                                 activity_type=ActivityType.PACKET_CREATED,
                                 title='Packet Created',
-                                description=f'Created packet {packet.id} with {qr_count} QR codes and auto-generated QR',
-                                metadata={'packet_id': packet.id, 'qr_count': qr_count, 'qr_url': qr_url}
+                                description=f'Created packet {packet.id} with {qr_count} QR codes, Main QR and Master QR auto-generated',
+                                metadata={'packet_id': packet.id, 'master_id': packet.master_id, 'qr_count': qr_count, 'main_qr_url': main_qr_url, 'master_qr_url': master_qr_url}
                             )
                             
-                            flash('Packet created successfully with QR code!', 'success')
+                            flash('Packet created successfully with Main and Master QR codes!', 'success')
                         else:
-                            logger.error(f"Failed to save QR to Firebase for packet {packet.id}")
+                            logger.error(f"Failed to save QRs to Firebase for packet {packet.id}")
                             flash('Packet created but QR generation failed', 'warning')
                     except Exception as e:
-                        logger.error(f"Error processing QR for packet {packet.id}: {e}")
+                        logger.error(f"Error processing QRs for packet {packet.id}: {e}")
                         flash('Packet created but QR generation failed', 'warning')
                 else:
-                    logger.error(f"Failed to generate QR for packet {packet.id}")
+                    logger.error(f"Failed to generate QRs for packet {packet.id}")
                     flash('Packet created but QR generation failed', 'warning')
                 
                 return redirect(url_for('packets.view', packet_id=packet.id))

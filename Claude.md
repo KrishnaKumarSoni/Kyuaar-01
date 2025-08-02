@@ -52,6 +52,8 @@ Each packet contains configurable QR codes (1-100) that point to a unique base U
 - **Offline Operation:** Works without internet (scan and save contact)
 - **Professional Image:** Clean, branded QR codes vs handwritten numbers
 - **Multilingual Support:** WhatsApp auto-translation for diverse customers
+- **No Reprints Needed:** Master QR allows unlimited updates without reprinting
+- **Lifetime Flexibility:** Change WhatsApp numbers, business info, seasonal offers anytime
 
 ## Revenue Generation Use Cases
 
@@ -79,8 +81,15 @@ Each packet contains configurable QR codes (1-100) that point to a unique base U
 The platform handles base URL generation, QR image uploads, packet states (setup pending/done, configuration pending/done), dynamic redirections, and basic business tracking for sales and revenue.
 Key Features
 
-* Packet Creation: Generate packets with unique IDs and base URLs (e.g., kyuaar.com/packet/[id]). Specify the number of QRs in the packet (1-100). No QR images are generated in-app; only the endpoint is created. Initial state: Setup Pending.
-* QR Upload and Management: After packet creation, admins can select a packet in the dashboard and upload QR images (PNG/JPG) generated externally encoding the base URL. Support uploading one image (representing identical QRs). Update state to Setup Done on successful upload.
+* Packet Creation: Generate packets with unique IDs and base URLs (e.g., kyuaar.com/packet/[id]). Specify the number of QRs in the packet (1-100). Auto-generate TWO QR codes per packet: Main QR for customer scans and Master QR for updates. Initial state: Setup Pending.
+
+* Dual QR System:
+  - **Main QR**: Customer-facing QR with base URL kyuaar.com/packet/PKT-123 for scans and redirects
+  - **Master QR**: Update QR with secret URL kyuaar.com/manage/MGT-ABC789 for configuration changes
+  - Both QRs auto-generated with user's default style settings during packet creation
+  - Master QR ID is completely unrelated to main packet ID for security
+
+* QR Upload and Management: After packet creation, admins can view and download both Main and Master QR images from the dashboard. Both QRs are auto-generated and ready for printing. Update state to Setup Done on successful generation.
 * Packet States:
 
 Setup Pending: Packet created but no QR image uploaded.
@@ -91,13 +100,27 @@ Configuration Done: Customer has scanned and set the redirect (e.g., WhatsApp nu
 
 * Configuration Journey:
 
-CUSTOMER SETUP FLOW: When customer scans QR → it goes to base URL (kyuaar.com/packet/[id]) → we check packet state:
+**INITIAL CUSTOMER SETUP FLOW**: When customer scans Main QR → goes to kyuaar.com/packet/PKT-123 → we check packet state:
 
 If Setup Pending: Show error page ("Packet not ready").
 If Setup Done but Configuration Pending: Customer sees config page on their mobile to enter/validate phone number (e.g., +919166900151) or custom URL. After they submit, we set redirect in DB to wa.me/[number] or custom URL, then update state to Configuration Done.
 If Configuration Done: All QRs in packet redirect from base URL to the configured destination URL.
 
-IMPORTANT: All QRs in the packet have the SAME base URL. When customer configures the redirect, it applies to ALL QRs in that packet.
+**MASTER QR UPDATE FLOW**: When customer scans Master QR → goes to kyuaar.com/manage/MGT-ABC789 → always shows update page:
+
+- Customer can modify existing WhatsApp number or custom URL
+- Same validation and UI as initial configuration 
+- Updates apply immediately to all QRs in the packet
+- Rate limited to prevent abuse (e.g., max 3 updates per day)
+- No authentication required - physical Master QR access is the security
+
+**SECURITY MODEL**: 
+- Master QR ID (MGT-ABC789) is cryptographically unrelated to main packet ID (PKT-123)
+- Impossible to derive Master URL from scanning Main QR
+- Physical security: Master QR hidden behind tamper-evident seal
+- Admin backup: Packet password stored for customer support cases
+
+IMPORTANT: All QRs in the packet have the SAME base URL and redirect to the SAME destination. Updates via Master QR affect ALL QRs in that packet instantly.
 
 
 

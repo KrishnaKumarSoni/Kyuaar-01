@@ -288,6 +288,96 @@ def get_user_activity():
 
 # ============= PACKET CONFIGURATION API (Customer-facing) =============
 
+@api_bp.route('/packets/<master_id>/manage', methods=['POST'])
+def update_packet_via_master_qr(master_id):
+    """Update packet redirect URL via Master QR (customer-facing, no auth required)"""
+    try:
+        from datetime import datetime, timezone, timedelta
+        
+        data = request.get_json()
+        redirect_url = data.get('redirect_url')
+        
+        if not redirect_url:
+            return jsonify({'error': 'Redirect URL is required'}), 400
+        
+        # Get packet by master ID
+        packet = Packet.get_by_master_id(master_id)
+        if not packet:
+            return jsonify({'error': 'Invalid Master QR code'}), 404
+        
+        # Rate limiting: Check update frequency (max 3 updates per day)
+        db = firestore.client()
+        
+        # Query for recent updates (last 24 hours)
+        yesterday = datetime.now(timezone.utc) - timedelta(days=1)
+        recent_updates = db.collection('master_updates')\
+            .where('master_id', '==', master_id)\
+            .where('updated_at', '>=', yesterday)\
+            .get()
+        
+        if len(recent_updates) >= 3:
+            return jsonify({
+                'error': 'Rate limit exceeded. Maximum 3 updates per day allowed.',
+                'remaining_updates': 0,
+                'reset_time': (datetime.now(timezone.utc) + timedelta(days=1)).isoformat()
+            }), 429
+        
+        # Validate URL format
+        if not redirect_url.startswith(('http://', 'https://')):
+            return jsonify({'error': 'URL must start with http:// or https://'}), 400
+        
+        # Update packet redirect URL
+        old_redirect = packet.redirect_url
+        
+        # Update the packet
+        db = firestore.client()
+        packet_ref = db.collection('packets').document(packet.id)
+        packet_ref.update({
+            'redirect_url': redirect_url,
+            'updated_at': datetime.now(timezone.utc)
+        })
+        
+        # Log the master update
+        master_update_log = {
+            'master_id': master_id,
+            'packet_id': packet.id,
+            'old_redirect_url': old_redirect,
+            'new_redirect_url': redirect_url,
+            'updated_at': datetime.now(timezone.utc),
+            'ip_address': request.remote_addr,
+            'user_agent': request.headers.get('User-Agent')
+        }
+        db.collection('master_updates').add(master_update_log)
+        
+        # Log activity for packet owner
+        Activity.log(
+            user_id=packet.user_id,
+            activity_type=ActivityType.PACKET_CONFIGURED,
+            title='Packet Updated via Master QR',
+            description=f'Customer updated packet {packet.id} redirect via Master QR',
+            metadata={
+                'packet_id': packet.id,
+                'master_id': master_id,
+                'old_redirect_url': old_redirect,
+                'new_redirect_url': redirect_url,
+                'update_method': 'master_qr'
+            }
+        )
+        
+        # Calculate remaining updates for today
+        remaining_updates = 3 - len(recent_updates) - 1
+        
+        return jsonify({
+            'message': 'Packet redirect updated successfully',
+            'redirect_url': redirect_url,
+            'remaining_updates': remaining_updates,
+            'reset_time': (datetime.now(timezone.utc) + timedelta(days=1)).isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Error updating packet via master QR {master_id}: {e}")
+        return jsonify({'error': 'Failed to update packet redirect'}), 500
+
 @api_bp.route('/packets/<packet_id>/configure', methods=['POST'])
 def configure_packet_redirect(packet_id):
     """Configure packet redirect (customer-facing, no auth required)"""

@@ -36,7 +36,8 @@ class Packet:
                  price: float = 0.0, base_url: str = None, qr_image_url: str = None,
                  redirect_url: str = None, buyer_name: str = None, buyer_email: str = None,
                  sale_price: float = None, sale_date: datetime = None,
-                 created_at: datetime = None, updated_at: datetime = None, deleted: bool = False):
+                 created_at: datetime = None, updated_at: datetime = None, deleted: bool = False,
+                 master_id: str = None, master_qr_url: str = None, packet_password: str = None):
         
         self.id = packet_id or self._generate_packet_id()
         self.user_id = user_id
@@ -54,11 +55,27 @@ class Packet:
         self.created_at = created_at or datetime.now(timezone.utc)
         self.updated_at = updated_at or datetime.now(timezone.utc)
         self.deleted = deleted
+        self.master_id = master_id or self._generate_master_id()
+        self.master_qr_url = master_qr_url
+        self.packet_password = packet_password or self._generate_password()
     
     @staticmethod
     def _generate_packet_id() -> str:
         """Generate unique packet ID"""
         return f"PKT-{uuid.uuid4().hex[:8].upper()}"
+    
+    @staticmethod
+    def _generate_master_id() -> str:
+        """Generate unique master ID (unrelated to packet ID)"""
+        return f"MGT-{uuid.uuid4().hex[:10].upper()}"
+    
+    @staticmethod
+    def _generate_password() -> str:
+        """Generate packet password for admin support"""
+        import random
+        import string
+        chars = string.ascii_uppercase + string.digits
+        return ''.join(random.choice(chars) for _ in range(6))
     
     def can_transition_to(self, new_state: str) -> bool:
         """Check if packet can transition to new state"""
@@ -263,6 +280,31 @@ class Packet:
         return None
     
     @classmethod
+    def get_by_master_id(cls, master_id: str) -> Optional['Packet']:
+        """Get packet by master ID for updates"""
+        try:
+            db = firestore.client()
+            query = db.collection('packets').where('master_id', '==', master_id)
+            docs = list(query.stream())
+            
+            if not docs:
+                return None
+            
+            doc = docs[0]  # Should be unique
+            data = doc.to_dict()
+            data['id'] = doc.id
+            
+            # Skip deleted packets
+            if data.get('deleted', False):
+                return None
+            
+            return cls.from_dict(data)
+            
+        except Exception as e:
+            logger.error(f"Error retrieving packet by master_id {master_id}: {e}")
+            return None
+    
+    @classmethod
     def create(cls, user_id: str, qr_count: int = 25, price: float = None) -> Optional['Packet']:
         """Create new packet"""
         try:
@@ -300,7 +342,10 @@ class Packet:
             'sale_date': self.sale_date.isoformat() if self.sale_date else None,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
-            'deleted': self.deleted
+            'deleted': self.deleted,
+            'master_id': self.master_id,
+            'master_qr_url': self.master_qr_url,
+            'packet_password': self.packet_password
         }
     
     @classmethod
@@ -358,7 +403,10 @@ class Packet:
             sale_date=sale_date,
             created_at=created_at,
             updated_at=updated_at,
-            deleted=bool(data.get('deleted', False))
+            deleted=bool(data.get('deleted', False)),
+            master_id=data.get('master_id'),
+            master_qr_url=data.get('master_qr_url'),
+            packet_password=data.get('packet_password')
         )
     
     def delete(self) -> bool:

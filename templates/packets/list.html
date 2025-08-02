@@ -42,7 +42,15 @@
                                     </div>
                                     <div>
                                         <p class="font-medium text-foreground">{{ packet.id }}</p>
-                                        <p class="text-sm text-muted-foreground">{{ packet.qr_count }} QR codes</p>
+                                        <div class="flex items-center space-x-2">
+                                            <p class="text-sm text-muted-foreground">{{ packet.qr_count }} QR codes</p>
+                                            {% if packet.master_qr_url %}
+                                            <span class="px-2 py-0.5 text-xs bg-orange-500/20 text-orange-400 rounded-full flex items-center">
+                                                <i class="ph ph-shield-check mr-1 text-xs"></i>
+                                                Master QR
+                                            </span>
+                                            {% endif %}
+                                        </div>
                                     </div>
                                 </div>
                             </td>

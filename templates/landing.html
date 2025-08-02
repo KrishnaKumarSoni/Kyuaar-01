@@ -297,7 +297,7 @@
                 <!-- Sub-headline -->
                 <p class="text-xl lg:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto">
                     Turn every customer interaction into recurring revenue. Build direct WhatsApp relationships that grow your business beyond platform limitations. 
-                    <span class="text-primary font-semibold">Generate more income through customer ownership.</span>
+                    <span class="text-primary font-semibold">Generate more income through customer ownership - no reprints needed, ever.</span>
                 </p>
                 
                 <!-- Primary CTA -->
@@ -465,6 +465,18 @@
                                 <h3 class="text-xl font-semibold mb-2">Platform Independence</h3>
                                 <p class="text-muted-foreground">
                                     Your income doesn't depend on algorithm changes or platform policies. You own your business.
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start gap-4">
+                            <div class="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center flex-shrink-0">
+                                <i class="ph ph-arrow-counter-clockwise text-xl text-primary"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-semibold mb-2">No Reprints Needed</h3>
+                                <p class="text-muted-foreground">
+                                    Update your WhatsApp number or website URL instantly without reprinting QR codes. Master QR system keeps you flexible.
                                 </p>
                             </div>
                         </div>
@@ -969,6 +981,10 @@
                                 <i class="ph ph-check text-primary mt-1"></i>
                                 <span>Own your business, work for yourself</span>
                             </li>
+                            <li class="flex items-start gap-3">
+                                <i class="ph ph-check text-primary mt-1"></i>
+                                <span>Update redirects instantly - no reprints needed</span>
+                            </li>
                         </ul>
                         <div class="mt-6 p-4 bg-primary/10 rounded-lg border border-primary/20">
                             <p class="text-center font-semibold">
@@ -1014,7 +1030,7 @@
                             </li>
                             <li class="flex items-center gap-2">
                                 <i class="ph ph-check text-primary"></i>
-                                <span class="text-sm">Unlimited URL changes</span>
+                                <span class="text-sm">Unlimited URL changes - no reprints</span>
                             </li>
                             <li class="flex items-center gap-2">
                                 <i class="ph ph-check text-primary"></i>
@@ -1053,7 +1069,7 @@
                             </li>
                             <li class="flex items-center gap-2">
                                 <i class="ph ph-check text-primary"></i>
-                                <span class="text-sm">Unlimited URL changes</span>
+                                <span class="text-sm">Unlimited URL changes - no reprints</span>
                             </li>
                             <li class="flex items-center gap-2">
                                 <i class="ph ph-check text-primary"></i>
@@ -1091,7 +1107,7 @@
                             </li>
                             <li class="flex items-center gap-2">
                                 <i class="ph ph-check text-primary"></i>
-                                <span class="text-sm">Unlimited URL changes</span>
+                                <span class="text-sm">Unlimited URL changes - no reprints</span>
                             </li>
                             <li class="flex items-center gap-2">
                                 <i class="ph ph-check text-primary"></i>
@@ -1246,7 +1262,7 @@
                         </button>
                         <div class="faq-answer px-6 pb-6" :class="openFaq === 1 ? 'open' : ''">
                             <p class="text-muted-foreground">
-                                Unlimited! You can change your QR code destination as many times as you want, whenever you want. There are no restrictions or additional charges for URL changes.
+                                Unlimited! You can change your QR code destination as many times as you want, whenever you want. Our Master QR system allows instant updates without reprinting - there are no restrictions or additional charges for URL changes.
                             </p>
                         </div>
                     </div>
@@ -1256,12 +1272,12 @@
                             class="w-full p-6 text-left flex items-center justify-between"
                             @click="openFaq = openFaq === 2 ? null : 2"
                         >
-                            <span class="font-semibold text-lg">What if I lose or damage a QR code?</span>
+                            <span class="font-semibold text-lg">How does the Master QR update system work?</span>
                             <i class="ph ph-caret-down transition-transform" :class="openFaq === 2 ? 'rotate-180' : ''"></i>
                         </button>
                         <div class="faq-answer px-6 pb-6" :class="openFaq === 2 ? 'open' : ''">
                             <p class="text-muted-foreground">
-                                We can provide replacement QR codes at a nominal cost of ₹15 per code. Your configuration and analytics data remain intact, so you just need to update the physical QR code.
+                                Each packet includes both customer QR codes and a Master QR for updates. Your customers use the main QR codes normally, but you keep the Master QR private. When you need to change your WhatsApp number or website URL, scan the Master QR to update all QR codes in that packet instantly - no reprinting needed!
                             </p>
                         </div>
                     </div>
@@ -1271,12 +1287,12 @@
                             class="w-full p-6 text-left flex items-center justify-between"
                             @click="openFaq = openFaq === 3 ? null : 3"
                         >
-                            <span class="font-semibold text-lg">Can I customize the design and branding?</span>
+                            <span class="font-semibold text-lg">What if I lose or damage a QR code?</span>
                             <i class="ph ph-caret-down transition-transform" :class="openFaq === 3 ? 'rotate-180' : ''"></i>
                         </button>
                         <div class="faq-answer px-6 pb-6" :class="openFaq === 3 ? 'open' : ''">
                             <p class="text-muted-foreground">
-                                Yes! All plans include custom branding. You can add your logo, choose colors, and customize the design to match your brand. Enterprise customers get additional design consultation.
+                                We can provide replacement QR codes at a nominal cost of ₹15 per code. Your configuration and analytics data remain intact, so you just need to update the physical QR code.
                             </p>
                         </div>
                     </div>
@@ -1286,12 +1302,12 @@
                             class="w-full p-6 text-left flex items-center justify-between"
                             @click="openFaq = openFaq === 4 ? null : 4"
                         >
-                            <span class="font-semibold text-lg">How long do the QR codes work?</span>
+                            <span class="font-semibold text-lg">Can I customize the design and branding?</span>
                             <i class="ph ph-caret-down transition-transform" :class="openFaq === 4 ? 'rotate-180' : ''"></i>
                         </button>
                         <div class="faq-answer px-6 pb-6" :class="openFaq === 4 ? 'open' : ''">
                             <p class="text-muted-foreground">
-                                Your QR codes work forever! There's no expiration date. As long as you maintain your Kyuaar account, your QR codes will continue to redirect to your chosen URLs.
+                                Yes! All plans include custom branding. You can add your logo, choose colors, and customize the design to match your brand. Enterprise customers get additional design consultation.
                             </p>
                         </div>
                     </div>
@@ -1301,12 +1317,12 @@
                             class="w-full p-6 text-left flex items-center justify-between"
                             @click="openFaq = openFaq === 5 ? null : 5"
                         >
-                            <span class="font-semibold text-lg">What analytics do I get?</span>
+                            <span class="font-semibold text-lg">How long do the QR codes work?</span>
                             <i class="ph ph-caret-down transition-transform" :class="openFaq === 5 ? 'rotate-180' : ''"></i>
                         </button>
                         <div class="faq-answer px-6 pb-6" :class="openFaq === 5 ? 'open' : ''">
                             <p class="text-muted-foreground">
-                                You get detailed scan analytics including number of scans, time stamps, geographic data, device information, and more. Business and Enterprise plans include advanced analytics and reporting features.
+                                Your QR codes work forever! There's no expiration date. As long as you maintain your Kyuaar account, your QR codes will continue to redirect to your chosen URLs.
                             </p>
                         </div>
                     </div>
@@ -1316,10 +1332,25 @@
                             class="w-full p-6 text-left flex items-center justify-between"
                             @click="openFaq = openFaq === 6 ? null : 6"
                         >
-                            <span class="font-semibold text-lg">Is there a setup fee or monthly cost?</span>
+                            <span class="font-semibold text-lg">What analytics do I get?</span>
                             <i class="ph ph-caret-down transition-transform" :class="openFaq === 6 ? 'rotate-180' : ''"></i>
                         </button>
                         <div class="faq-answer px-6 pb-6" :class="openFaq === 6 ? 'open' : ''">
+                            <p class="text-muted-foreground">
+                                You get detailed scan analytics including number of scans, time stamps, geographic data, device information, and more. Business and Enterprise plans include advanced analytics and reporting features.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item bg-card rounded-lg border border-border">
+                        <button 
+                            class="w-full p-6 text-left flex items-center justify-between"
+                            @click="openFaq = openFaq === 7 ? null : 7"
+                        >
+                            <span class="font-semibold text-lg">Is there a setup fee or monthly cost?</span>
+                            <i class="ph ph-caret-down transition-transform" :class="openFaq === 7 ? 'rotate-180' : ''"></i>
+                        </button>
+                        <div class="faq-answer px-6 pb-6" :class="openFaq === 7 ? 'open' : ''">
                             <p class="text-muted-foreground">
                                 No setup fees or monthly costs! You pay once for your QR codes and that's it. The only additional cost would be if you need replacement codes or want to order more QR codes later.
                             </p>
